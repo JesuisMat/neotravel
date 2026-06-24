@@ -1,0 +1,21 @@
+/* ============================================================
+   NeoTravel — Polices
+   Display : Spectral — un sérif assuré et accueillant, qui
+             affirme l'expertise sans arrogance et respire.
+   Texte   : Hanken Grotesk — un sans humaniste limpide,
+             clair, qui n'impose jamais d'effort de lecture.
+   Données : JetBrains Mono — chiffres tabulaires pour les
+             KPIs, devis et matrices tarifaires.
+
+   NOTE : faute de fichiers de polices fournis, les webfonts
+   sont chargées depuis Google Fonts (équivalents exacts, pas
+   de substitution). Voir CAVEAT dans le readme.
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400;1,500&family=Hanken+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+:root {
+  --font-display: 'Spectral', Georgia, 'Times New Roman', serif;
+  --font-sans: 'Hanken Grotesk', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', monospace;
+}

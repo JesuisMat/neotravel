@@ -1,0 +1,108 @@
+/* ============================================================
+   NeoTravel — Couleurs · « Aube »
+   Inspiration : un hall de gare au petit matin, un lever de
+   soleil vu depuis la route, un horizon qui se fond du sol au
+   ciel. La couleur crée la profondeur et raconte le déplacement.
+   ============================================================ */
+
+:root {
+  /* --- Petrol : l'encre, la nuit qui se dissipe (texte, surfaces profondes) --- */
+  --petrol-950: #0A2029;
+  --petrol-900: #0E2A38;
+  --petrol-800: #143845;
+  --petrol-700: #1C4A5A;
+  --petrol-600: #24596B;
+
+  /* --- Horizon : le bleu serein du ciel au lever, la signalétique calme (primaire) --- */
+  --horizon-700: #245A6F;
+  --horizon-600: #2C6378;   /* primaire de marque */
+  --horizon-500: #3A7B92;
+  --horizon-400: #5E9BB0;
+  --horizon-300: #93BECD;
+  --horizon-200: #C3DBE3;
+  --horizon-100: #E2EEF2;
+  --horizon-50:  #F0F6F8;
+
+  /* --- Aube : la lueur chaude du soleil sur la route (accent) --- */
+  --dawn-700: #CC7A45;
+  --dawn-600: #E08A52;
+  --dawn-500: #F0A062;   /* accent chaud */
+  --dawn-400: #F6B884;
+  --dawn-300: #FAD0AC;
+  --dawn-200: #FCE3CD;
+  --dawn-100: #FDF1E6;
+
+  /* --- Blush : la bande rosée de l'horizon, transition ciel/sol (tertiaire) --- */
+  --blush-500: #EE9C84;
+  --blush-400: #F2B5A0;
+  --blush-300: #F7CFC0;
+  --blush-200: #FBE2D9;
+
+  /* --- Sable & pierre : la lumière du matin sur le marbre (neutres chauds) --- */
+  --sand-50:  #FBF7F2;   /* fond de page */
+  --sand-100: #F5EFE6;
+  --sand-200: #ECE3D6;
+  --stone-200: #E4DDD2;
+  --stone-300: #CFC6B9;
+  --stone-400: #A89E8F;
+  --stone-500: #7B7264;
+  --stone-600: #564E43;
+  --white: #FFFFFF;
+  --paper: #FEFCF9;      /* blanc chaud des cartes */
+
+  /* --- Couleurs d'état (statuts commerciaux, feedback) --- */
+  --positive-600: #2F7E61;
+  --positive-500: #3E9A77;
+  --positive-100: #E2F0EA;
+  --caution-600: #C8862F;
+  --caution-500: #D9943F;
+  --caution-100: #FAEFDC;
+  --negative-600: #B5543F;
+  --negative-500: #C4624E;
+  --negative-100: #F7E5DF;
+  --urgent-600: #C2493B;
+  --urgent-500: #D55A48;
+  --urgent-100: #F8E2DD;
+
+  /* ============================================================
+     Alias sémantiques — référez-vous TOUJOURS à ceux-ci dans l'UI
+     ============================================================ */
+
+  /* Texte */
+  --text-strong: var(--petrol-900);
+  --text-body:   #25404B;
+  --text-muted:  var(--stone-500);
+  --text-subtle: var(--stone-400);
+  --text-on-dark: #EAF2F4;
+  --text-on-dark-muted: #A9C2CB;
+  --text-on-accent: #3A2410;
+
+  /* Surfaces */
+  --surface-page:   var(--sand-50);
+  --surface-card:   var(--paper);
+  --surface-raised: var(--white);
+  --surface-sunken: var(--sand-100);
+  --surface-dark:   var(--petrol-900);
+  --surface-dark-2: var(--petrol-800);
+  --surface-accent-soft: var(--dawn-100);
+  --surface-brand-soft:  var(--horizon-100);
+
+  /* Marque */
+  --brand:        var(--horizon-600);
+  --brand-hover:  var(--horizon-700);
+  --brand-soft:   var(--horizon-100);
+  --accent:       var(--dawn-500);
+  --accent-hover: var(--dawn-600);
+  --accent-soft:  var(--dawn-100);
+
+  /* Bordures & traits */
+  --border-soft:   #EBE3D7;
+  --border-medium: var(--stone-300);
+  --border-strong: var(--stone-400);
+  --border-brand:  var(--horizon-300);
+  --border-on-dark: rgba(195, 219, 227, 0.18);
+
+  /* Anneaux de focus */
+  --ring: rgba(58, 123, 146, 0.45);
+  --ring-accent: rgba(240, 160, 98, 0.5);
+}

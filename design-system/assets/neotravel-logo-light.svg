@@ -1,0 +1,16 @@
+<svg width="184" height="40" viewBox="0 0 184 40" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="NeoTravel">
+  <defs>
+    <linearGradient id="ntSun3" x1="20" y1="6" x2="20" y2="28" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FAD0AC"></stop>
+      <stop offset="1" stop-color="#F0A062"></stop>
+    </linearGradient>
+  </defs>
+  <circle cx="20" cy="22" r="9" fill="url(#ntSun3)"></circle>
+  <line x1="4" y1="31" x2="36" y2="31" stroke="#93BECD" stroke-width="2.4" stroke-linecap="round"></line>
+  <line x1="20" y1="3" x2="20" y2="7.5" stroke="#F6B884" stroke-width="2.2" stroke-linecap="round"></line>
+  <line x1="8.6" y1="9" x2="11.4" y2="12" stroke="#F6B884" stroke-width="2.2" stroke-linecap="round"></line>
+  <line x1="31.4" y1="9" x2="28.6" y2="12" stroke="#F6B884" stroke-width="2.2" stroke-linecap="round"></line>
+  <text x="48" y="27.5" font-family="Spectral, Georgia, serif" font-size="23" font-weight="600" letter-spacing="-0.01em">
+    <tspan fill="#FFFFFF">Neo</tspan><tspan fill="#93BECD">Travel</tspan>
+  </text>
+</svg>

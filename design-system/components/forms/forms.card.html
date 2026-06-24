@@ -1,0 +1,36 @@
+<!-- @dsCard group="Composants" viewport="700x260" name="Champs de formulaire" subtitle="Saisie, listes déroulantes — états repos, focus, erreur" -->
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<link rel="stylesheet" href="../../styles.css" />
+<style>
+  html,body{margin:0}
+  body{background:var(--surface-page);font-family:var(--font-sans);color:var(--text-body);padding:22px}
+  .grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../../_ds_bundle.js"></script>
+<script type="text/babel">
+  const { Input, Select } = window.NeoTravelDesignSystem_389d31;
+  function Demo() {
+    return (
+      <div className="grid">
+        <Input label="Ville de départ" defaultValue="Paris" placeholder="Départ" />
+        <Input label="Email" type="email" placeholder="vous@exemple.fr" hint="Pour recevoir votre devis" />
+        <Input label="Nombre de passagers" error="Ce champ est requis" defaultValue="" placeholder="0" />
+        <Select label="Type de client" options={['Particulier','Association','Collectivité','Entreprise']} defaultValue="Association" />
+        <Select label="Urgence" options={[{value:'p',label:'Prioritaire (< 48h)'},{value:'n',label:'Normal'}]} placeholder="Choisir…" />
+        <Input label="Téléphone (désactivé)" disabled defaultValue="06 12 34 56 78" />
+      </div>
+    );
+  }
+  ReactDOM.createRoot(document.getElementById('root')).render(<Demo />);
+</script>
+</body>
+</html>

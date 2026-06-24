@@ -1,0 +1,19 @@
+<!-- @dsCard group="Couleurs" viewport="700x150" name="Couleurs d'état" subtitle="Statuts commerciaux & feedback — positif, attention, négatif, urgent" -->
+<!DOCTYPE html>
+<html lang="fr"><head><meta charset="utf-8" /><link rel="stylesheet" href="../styles.css" />
+<style>
+  html,body{margin:0}body{background:var(--surface-page);font-family:var(--font-sans);padding:20px}
+  .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+  .cell{border-radius:var(--radius-md);padding:14px;display:flex;flex-direction:column;gap:8px}
+  .dot{display:flex;align-items:center;gap:8px;font:600 13px/1 var(--font-sans)}
+  .dot i{width:12px;height:12px;border-radius:50%}
+  .hex{font:11px/1 var(--font-mono);opacity:.7}
+</style></head>
+<body>
+<div class="grid">
+  <div class="cell" style="background:var(--positive-100)"><div class="dot" style="color:var(--positive-600)"><i style="background:var(--positive-500)"></i>Positif</div><div style="font-size:12px;color:var(--positive-600)">Accepté · Confirmé</div><div class="hex" style="color:var(--positive-600)">#3E9A77</div></div>
+  <div class="cell" style="background:var(--caution-100)"><div class="dot" style="color:var(--caution-600)"><i style="background:var(--caution-500)"></i>Attention</div><div style="font-size:12px;color:var(--caution-600)">Incomplet · Relances</div><div class="hex" style="color:var(--caution-600)">#D9943F</div></div>
+  <div class="cell" style="background:var(--negative-100)"><div class="dot" style="color:var(--negative-600)"><i style="background:var(--negative-500)"></i>Négatif</div><div style="font-size:12px;color:var(--negative-600)">Refusé</div><div class="hex" style="color:var(--negative-600)">#C4624E</div></div>
+  <div class="cell" style="background:var(--urgent-100)"><div class="dot" style="color:var(--urgent-600)"><i style="background:var(--urgent-500)"></i>Urgent</div><div style="font-size:12px;color:var(--urgent-600)">Prioritaire &lt; 48h</div><div class="hex" style="color:var(--urgent-600)">#D55A48</div></div>
+</div>
+</body></html>

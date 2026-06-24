@@ -1,0 +1,63 @@
+/* ============================================================
+   NeoTravel — Typographie
+   Des titres en sérif qui affirment, un corps de texte qui
+   respire. Échelle généreuse, interlignage ample.
+   ============================================================ */
+
+:root {
+  /* Familles (déclarées dans fonts.css) */
+  /* --font-display / --font-sans / --font-mono */
+
+  /* Graisses */
+  --weight-light: 300;
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+  --weight-extrabold: 800;
+
+  /* Échelle de tailles (px) — généreuse, jamais étriquée */
+  --text-display-xl: 76px;  /* hero, première impression */
+  --text-display-l:  56px;
+  --text-display-m:  42px;
+  --text-h1: 34px;
+  --text-h2: 27px;
+  --text-h3: 21px;
+  --text-h4: 18px;
+  --text-body-l: 19px;      /* chapôs, accroches */
+  --text-body:   17px;      /* corps par défaut */
+  --text-body-s: 15px;
+  --text-caption: 13px;
+  --text-micro: 11.5px;
+
+  /* Interlignages */
+  --leading-tight: 1.08;    /* grands titres display */
+  --leading-snug: 1.22;     /* titres */
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.65;  /* corps long, qui respire */
+
+  /* Interlettrages */
+  --tracking-tight: -0.02em;
+  --tracking-snug: -0.01em;
+  --tracking-normal: 0;
+  --tracking-wide: 0.04em;
+  --tracking-caps: 0.14em;  /* labels en capitales */
+
+  /* ---- Rôles typographiques (raccourcis sémantiques) ---- */
+  --type-display: var(--weight-medium) var(--text-display-l)/var(--leading-tight) var(--font-display);
+  --type-h1: var(--weight-medium) var(--text-h1)/var(--leading-snug) var(--font-display);
+  --type-h2: var(--weight-medium) var(--text-h2)/var(--leading-snug) var(--font-display);
+  --type-h3: var(--weight-semibold) var(--text-h3)/var(--leading-snug) var(--font-sans);
+  --type-body: var(--weight-regular) var(--text-body)/var(--leading-relaxed) var(--font-sans);
+  --type-body-s: var(--weight-regular) var(--text-body-s)/var(--leading-normal) var(--font-sans);
+  --type-label: var(--weight-semibold) var(--text-caption)/1.2 var(--font-sans);
+  --type-mono: var(--weight-medium) var(--text-body-s)/1.4 var(--font-mono);
+}
+
+/* Label en capitales fines — utilisé pour la signalétique, les surtitres */
+.nt-eyebrow {
+  font: var(--type-label);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-caps);
+  color: var(--text-muted);
+}

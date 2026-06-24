@@ -1,0 +1,72 @@
+/* ============================================================
+   NeoTravel — Effets : dégradés, ombres, flou, mouvement
+   Le glissement fluide d'un trajet sans accroc. Transitions
+   douces, dégradés qui se déplacent lentement, ombres
+   diffuses comme une lumière de petit matin.
+   ============================================================ */
+
+:root {
+  /* ---- Dégradés signature : l'horizon qui se fond du sol au ciel ---- */
+
+  /* L'aube complète : ciel serein → bande chaude → lueur au sol */
+  --gradient-dawn: linear-gradient(
+    178deg,
+    #DCEAF0 0%,
+    #E7E3DD 34%,
+    #F6DDC6 58%,
+    #F4BE92 80%,
+    #EFA76E 100%
+  ); /* @kind other */
+
+  /* Lever de soleil sur la route — radial chaud, pour les halos */
+  --gradient-sunrise: radial-gradient(
+    120% 90% at 50% 108%,
+    #F0A062 0%,
+    #F6C79C 26%,
+    #EDD9CB 50%,
+    #DDEAEF 78%
+  ); /* @kind other */
+
+  /* Ciel calme — fond sombre premium (hall de gare avant l'aube) */
+  --gradient-dusk: linear-gradient(165deg, #143845 0%, #0E2A38 55%, #0A2029 100%); /* @kind other */
+
+  /* Voile chaud subtil sur surface claire */
+  --gradient-veil: linear-gradient(180deg, rgba(250,208,172,0.0) 0%, rgba(250,208,172,0.35) 100%); /* @kind other */
+
+  /* Trait d'horizon lumineux — pour les séparateurs */
+  --gradient-line: linear-gradient(90deg, transparent 0%, var(--dawn-400) 22%, var(--horizon-400) 78%, transparent 100%); /* @kind other */
+
+  /* ---- Ombres — diffuses, teintées petrol, jamais dures ---- */
+  --shadow-xs: 0 1px 2px rgba(14, 42, 56, 0.05);
+  --shadow-sm: 0 1px 2px rgba(14, 42, 56, 0.06), 0 2px 6px -2px rgba(14, 42, 56, 0.07);
+  --shadow-md: 0 4px 12px -2px rgba(14, 42, 56, 0.10), 0 2px 6px -3px rgba(14, 42, 56, 0.06);
+  --shadow-lg: 0 16px 40px -12px rgba(14, 42, 56, 0.18), 0 4px 12px -6px rgba(14, 42, 56, 0.10);
+  --shadow-xl: 0 32px 70px -20px rgba(14, 42, 56, 0.24);
+  --shadow-glow: 0 10px 44px -10px rgba(240, 160, 98, 0.42);   /* lueur d'aube */
+  --shadow-glow-blue: 0 10px 44px -12px rgba(46, 99, 120, 0.35);
+  --shadow-inset: inset 0 1px 2px rgba(14, 42, 56, 0.06);
+
+  /* ---- Flou (verre dépoli des espaces de transit) ---- */
+  --blur-sm: 8px;
+  --blur-md: 16px;
+  --blur-lg: 28px;
+
+  /* ---- Mouvement : glissement fluide, jamais de rupture ---- */
+  --ease-glide: cubic-bezier(0.22, 1, 0.36, 1); /* @kind other */
+  --ease-soft:  cubic-bezier(0.4, 0, 0.2, 1); /* @kind other */
+  --ease-entry: cubic-bezier(0.16, 1, 0.3, 1); /* @kind other */
+  --dur-fast: 180ms; /* @kind other */
+  --dur-base: 320ms; /* @kind other */
+  --dur-slow: 560ms; /* @kind other */
+  --dur-drift: 14s; /* @kind other */
+}
+
+/* Respecte les préférences de mouvement réduit */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-fast: 0ms; /* @kind other */
+    --dur-base: 0ms; /* @kind other */
+    --dur-slow: 0ms; /* @kind other */
+    --dur-drift: 0ms; /* @kind other */
+  }
+}

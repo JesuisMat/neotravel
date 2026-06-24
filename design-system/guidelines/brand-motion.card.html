@@ -1,0 +1,18 @@
+<!-- @dsCard group="Marque" viewport="700x180" name="Mouvement — le glissement d'un trajet" subtitle="Transitions douces, dérive lente des dégradés, jamais de rupture" -->
+<!DOCTYPE html>
+<html lang="fr"><head><meta charset="utf-8" /><link rel="stylesheet" href="../styles.css" />
+<style>html,body{margin:0}body{background:var(--surface-page);font-family:var(--font-sans);color:var(--text-body);padding:24px}
+.track{position:relative;height:8px;border-radius:var(--radius-pill);background:var(--surface-sunken);margin:14px 0 6px;overflow:hidden}
+.dot{position:absolute;top:50%;width:18px;height:18px;border-radius:50%;background:var(--gradient-sunrise);box-shadow:var(--shadow-glow);transform:translateY(-50%)}
+.g1{animation:glide 3.4s var(--ease-glide) infinite alternate}
+.g2{animation:glide 3.4s var(--ease-soft) infinite alternate}
+@keyframes glide{from{left:2px}to{left:calc(100% - 20px)}}
+.lbl{font:600 12px/1 var(--font-sans);color:var(--text-strong)}
+.meta{font:11px/1 var(--font-mono);color:var(--text-subtle)}</style></head>
+<body>
+<div class="lbl">ease-glide <span class="meta">cubic-bezier(.22,1,.36,1) — sortie longue et douce</span></div>
+<div class="track"><div class="dot g1"></div></div>
+<div class="lbl" style="margin-top:18px">ease-soft <span class="meta">cubic-bezier(.4,0,.2,1) — transitions d'état</span></div>
+<div class="track"><div class="dot g2"></div></div>
+<div class="meta" style="margin-top:14px">Durées · fast 180ms · base 320ms · slow 560ms · dérive des dégradés 14s</div>
+</body></html>

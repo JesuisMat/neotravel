@@ -1,0 +1,69 @@
+<!-- @dsCard group="Landing" viewport="1320x880" name="Landing conversationnelle" subtitle="La page d'accueil EST le chat — promesse, preuve, appel à l'action unique" -->
+<!-- @startingPoint section="Écrans" subtitle="Landing conversationnelle NeoTravel (page unique)" viewport="1320x880" -->
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>NeoTravel — Voyagez en groupe, on s'occupe de tout</title>
+<link rel="icon" href="../../assets/neotravel-mark.svg" />
+<link rel="stylesheet" href="../../styles.css" />
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:var(--surface-page);font-family:var(--font-sans);color:var(--text-body);-webkit-font-smoothing:antialiased}
+  .nt-ico svg{width:100%;height:100%;display:block}
+  ::selection{background:var(--dawn-300);color:var(--petrol-950)}
+  /* défilement doux — le glissement d'un trajet sans accroc */
+  html{scroll-behavior:smooth}
+  a{color:var(--brand)}
+  /* révélation douce au défilement */
+  .nt-reveal{opacity:0;transform:translateY(22px);transition:opacity .8s var(--ease-glide),transform .8s var(--ease-glide)}
+  .nt-reveal.nt-in{opacity:1;transform:none}
+  @media (prefers-reduced-motion:reduce){.nt-reveal{opacity:1;transform:none}}
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+<script src="../../_ds_bundle.js"></script>
+<script>
+  // Expose les composants du design system comme globaux pour les scripts Babel
+  if (window.NeoTravelDesignSystem_389d31) Object.assign(window, window.NeoTravelDesignSystem_389d31);
+</script>
+
+<script type="text/babel" src="../_shared/Icon.jsx"></script>
+<script type="text/babel" src="./LandingChrome.jsx"></script>
+<script type="text/babel" src="./HeroChat.jsx"></script>
+<script type="text/babel" src="./Narrative.jsx"></script>
+<script type="text/babel">
+  const { useEffect } = React;
+  function App() {
+    const scrollTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
+    useEffect(() => {
+      lucide.createIcons({ nameAttr: 'data-lucide', attrs: { 'stroke-width': 1.75 } });
+      const io = new IntersectionObserver((es) => {
+        es.forEach((e) => { if (e.isIntersecting) { e.target.classList.add('nt-in'); io.unobserve(e.target); } });
+      }, { threshold: 0.12 });
+      document.querySelectorAll('.nt-reveal').forEach((el) => io.observe(el));
+      return () => io.disconnect();
+    }, []);
+    return (
+      <div>
+        <LandingHeader onCTA={scrollTop} />
+        <Hero onCTA={scrollTop} />
+        <div className="nt-reveal"><HowItWorks /></div>
+        <div className="nt-reveal"><Proof /></div>
+        <div className="nt-reveal"><FinalCTA onCTA={scrollTop} /></div>
+        <LandingFooter />
+      </div>
+    );
+  }
+  ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
