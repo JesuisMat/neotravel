@@ -522,6 +522,7 @@ calculer_devis(params: {
   nb_passagers: number
   date_depart: Date
   date_demande: Date
+  date_retour?: Date               // duree de prestation = date_retour - date_depart (min 1 jour)
   distance_km: number
   type_vehicule: string
   options: Array<'guide' | 'nuit_chauffeur' | 'peages'>
@@ -535,6 +536,9 @@ calculer_devis(params: {
   devise: 'EUR'
 }
 ```
+
+**Calcul des options facturees a la duree (guide, nuit chauffeur) :**
+Le nombre d'unites se base sur la **duree de la prestation** (`date_retour - date_depart`, minimum 1 jour si `date_retour` absent). Les options forfaitaires (peages) restent un montant fixe quelle que soit la duree.
 
 **Cas limites a tester impefrativement :**
 - 0 passager ou > 85 passagers
