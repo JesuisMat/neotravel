@@ -772,28 +772,97 @@ function EquipeView() {
 
 function ComplexesView({ leads }: { leads: Lead[] }) {
   const router = useRouter();
-  const [visible, setVisible] = useState<Set<string>>(() => new Set(leads.map((l) => l.id)));
+  const [tab, setTab] = useState<"attente" | "historique">("attente");
+  const [dismissed, setDismissed] = useState<Set<string>>(new Set());
 
   function handleDone(id: string) {
-    setVisible((prev) => { const next = new Set(prev); next.delete(id); return next; });
+    setDismissed((prev) => { const next = new Set(prev); next.add(id); return next; });
     router.refresh();
   }
 
-  const actifs = leads.filter((l) => visible.has(l.id));
+  // Tous les leads HITL, qu'ils soient encore complexes ou traités
+  const tousHITL = leads.filter((l) => l.origine_demande === "complexe_hitl");
+  const enAttente = tousHITL.filter((l) => l.statut === "complexe" && !dismissed.has(l.id));
+  const historique = tousHITL.filter((l) => l.statut !== "complexe");
 
-  if (actifs.length === 0) {
-    return (
-      <div style={{ padding: "48px", textAlign: "center", color: "var(--text-muted)", fontSize: 14, fontFamily: "var(--font-sans)", background: "var(--surface-card)", borderRadius: 12, border: "1px solid var(--border-soft)" }}>
-        Aucun cas complexe en attente
-      </div>
-    );
-  }
+  const tabBtnStyle = (active: boolean): React.CSSProperties => ({
+    padding: "7px 16px", borderRadius: 8, cursor: "pointer",
+    fontSize: 13, fontWeight: active ? 600 : 400, fontFamily: "var(--font-sans)",
+    background: active ? "var(--petrol-800)" : "var(--surface-card)",
+    color: active ? "#fff" : "var(--text-body)",
+    border: active ? "none" : "1px solid var(--border-soft)",
+  });
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-      {actifs.map((r) => (
-        <ComplexeCard key={r.id} lead={r} onDone={() => handleDone(r.id)} />
-      ))}
+    <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+      {/* Tabs */}
+      <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+        <button style={tabBtnStyle(tab === "attente")} onClick={() => setTab("attente")}>
+          En attente {enAttente.length > 0 && `(${enAttente.length})`}
+        </button>
+        <button style={tabBtnStyle(tab === "historique")} onClick={() => setTab("historique")}>
+          Historique {historique.length > 0 && `(${historique.length})`}
+        </button>
+      </div>
+
+      {/* En attente */}
+      {tab === "attente" && (
+        enAttente.length === 0 ? (
+          <div style={{ padding: "48px", textAlign: "center", color: "var(--text-muted)", fontSize: 14, fontFamily: "var(--font-sans)", background: "var(--surface-card)", borderRadius: 12, border: "1px solid var(--border-soft)" }}>
+            Aucun cas complexe en attente
+          </div>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            {enAttente.map((r) => (
+              <ComplexeCard key={r.id} lead={r} onDone={() => handleDone(r.id)} />
+            ))}
+          </div>
+        )
+      )}
+
+      {/* Historique */}
+      {tab === "historique" && (
+        historique.length === 0 ? (
+          <div style={{ padding: "48px", textAlign: "center", color: "var(--text-muted)", fontSize: 14, fontFamily: "var(--font-sans)", background: "var(--surface-card)", borderRadius: 12, border: "1px solid var(--border-soft)" }}>
+            Aucun cas complexe traité
+          </div>
+        ) : (
+          <div style={{ background: "var(--surface-card)", border: "1px solid var(--border-soft)", borderRadius: 12, overflow: "hidden" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+              <thead>
+                <tr style={{ background: "var(--surface-sunken)" }}>
+                  {["Lead", "Trajet", "Statut", "Montant TTC", "Traité le"].map((h) => (
+                    <th key={h} style={{ textAlign: "left", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--text-subtle)", padding: "11px 16px", borderBottom: "1px solid var(--border-soft)", fontFamily: "var(--font-sans)", whiteSpace: "nowrap" }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {historique.map((r) => {
+                  const d = r.devis[0];
+                  return (
+                    <tr key={r.id} style={{ borderBottom: "1px solid var(--border-soft)" }} onMouseEnter={(e) => { (e.currentTarget as HTMLTableRowElement).style.background = "var(--surface-sunken)"; }} onMouseLeave={(e) => { (e.currentTarget as HTMLTableRowElement).style.background = "transparent"; }}>
+                      <td style={{ padding: "13px 16px" }}>
+                        <div style={{ fontSize: 14, fontWeight: 600, color: "var(--text-strong)", fontFamily: "var(--font-sans)" }}>{r.nom ?? "Prospect"}</div>
+                        <div style={{ fontSize: 12, color: "var(--text-subtle)", marginTop: 2, fontFamily: "var(--font-sans)" }}>{r.email}</div>
+                      </td>
+                      <td style={{ padding: "13px 16px", fontSize: 13, color: "var(--text-body)", fontFamily: "var(--font-sans)", whiteSpace: "nowrap" }}>
+                        {r.origine ?? "?"} → {r.destination ?? "?"}
+                      </td>
+                      <td style={{ padding: "13px 16px" }}><StatusBadge statut={r.statut} /></td>
+                      <td style={{ padding: "13px 16px", fontSize: 13, fontFamily: "var(--font-mono)", fontWeight: 600, color: d ? "var(--text-strong)" : "var(--text-subtle)" }}>
+                        {d ? formatMontant(d.montant_ttc) : "—"}
+                      </td>
+                      <td style={{ padding: "13px 16px", fontSize: 12, color: "var(--text-subtle)", fontFamily: "var(--font-sans)" }}>
+                        {timeAgo(r.created_at)}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )
+      )}
     </div>
   );
 }
@@ -831,17 +900,32 @@ export function DashboardClient({ leads, kpis }: Props) {
   const initialView = (searchParams.get("view") as ViewId) ?? "pilotage";
   const [view, setView] = useState<ViewId>(initialView);
   const [filterStatut, setFilterStatut] = useState("tous");
+  const [filterMois, setFilterMois] = useState("tous");
 
   function navigateTo(v: ViewId) {
     setView(v);
     router.replace(v === "pilotage" ? "/dashboard" : `/dashboard?view=${v}`, { scroll: false });
   }
 
-  const casComplexes = leads.filter((l) => l.statut === "complexe");
-  const enRelance    = leads.filter((l) => ["devis_envoye", "relance_1", "relance_2"].includes(l.statut));
-  const filteredLeads = filterStatut === "tous"
+  // Mois disponibles à partir des leads
+  const moisDisponibles = Array.from(
+    new Set(leads.map((l) => l.created_at.slice(0, 7))) // "YYYY-MM"
+  ).sort((a, b) => b.localeCompare(a));
+
+  const leadsFiltreMois = filterMois === "tous"
     ? leads
-    : leads.filter((l) => filterStatut === "relance" ? l.statut.startsWith("relance") : l.statut === filterStatut);
+    : leads.filter((l) => l.created_at.startsWith(filterMois));
+
+  const casComplexes = leadsFiltreMois.filter((l) => l.statut === "complexe");
+  const enRelance    = leadsFiltreMois.filter((l) => ["devis_envoye", "relance_1", "relance_2"].includes(l.statut));
+  const filteredLeads = filterStatut === "tous"
+    ? leadsFiltreMois
+    : leadsFiltreMois.filter((l) => filterStatut === "relance" ? l.statut.startsWith("relance") : l.statut === filterStatut);
+
+  const moisLabel = (ym: string) => {
+    const [y, m] = ym.split("-");
+    return new Date(Number(y), Number(m) - 1, 1).toLocaleDateString("fr-FR", { month: "long", year: "numeric" });
+  };
 
   const [title, subtitle] = VIEW_TITLES[view];
 
@@ -905,25 +989,183 @@ export function DashboardClient({ leads, kpis }: Props) {
             <h1 style={{ fontFamily: "var(--font-display)", fontSize: 24, fontWeight: 400, color: "var(--text-strong)", margin: "0 0 2px", letterSpacing: "-0.015em" }}>{title}</h1>
             <p style={{ fontSize: 13, color: "var(--text-muted)", margin: 0, fontFamily: "var(--font-sans)" }}>{subtitle}</p>
           </div>
-          <div style={{ fontSize: 12.5, color: "var(--text-subtle)", fontFamily: "var(--font-sans)", background: "var(--surface-card)", border: "1px solid var(--border-soft)", borderRadius: 8, padding: "7px 13px", letterSpacing: "0.01em" }}>
-            {new Date().toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <select
+              value={filterMois}
+              onChange={(e) => setFilterMois(e.target.value)}
+              style={{ fontSize: 12.5, color: "var(--text-body)", fontFamily: "var(--font-sans)", background: "var(--surface-card)", border: "1px solid var(--border-soft)", borderRadius: 8, padding: "7px 13px", cursor: "pointer", outline: "none" }}
+            >
+              <option value="tous">Toute la période</option>
+              {moisDisponibles.map((ym) => (
+                <option key={ym} value={ym}>{moisLabel(ym)}</option>
+              ))}
+            </select>
+            <div style={{ fontSize: 12.5, color: "var(--text-subtle)", fontFamily: "var(--font-sans)", background: "var(--surface-card)", border: "1px solid var(--border-soft)", borderRadius: 8, padding: "7px 13px", letterSpacing: "0.01em" }}>
+              {new Date().toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}
+            </div>
           </div>
         </header>
 
         {/* Content */}
         <div style={{ padding: "clamp(20px,3vw,32px)", flex: 1 }}>
 
-          {/* ── PILOTAGE — KPIs only ── */}
-          {view === "pilotage" && (
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12 }}>
-              <StatCard label="Total leads"      value={String(kpis.totalLeads)}          caption="toutes demandes"        />
-              <StatCard label="Devis envoyés"    value={String(kpis.devisEnvoyes)}         caption="flux actif"             variant="accent" />
-              <StatCard label="Confirmés"        value={String(kpis.confirmes)}            caption="prestations validées"   />
-              <StatCard label="En relance"       value={String(kpis.enRelance)}            caption="en attente de réponse"  />
-              <StatCard label="Cas complexes"    value={String(kpis.casComplexes)}         caption="à traiter"              variant={kpis.casComplexes > 0 ? "warning" : "default"} />
-              <StatCard label="Pipeline"         value={formatMontant(kpis.montantPipeline)} caption="montant TTC estimé"   />
-            </div>
-          )}
+          {/* ── PILOTAGE ── */}
+          {view === "pilotage" && (() => {
+            // KPIs recalculés sur les leads filtrés par mois
+            const lf = leadsFiltreMois;
+            const totalLeads = lf.length;
+            const devisEnvoyes = lf.filter((l) => ["devis_envoye", "relance_1", "relance_2", "accepte_prospect", "confirme", "refuse", "cloture"].includes(l.statut)).length;
+            const confirmes = lf.filter((l) => l.statut === "confirme").length;
+            const enRelanceLoc = lf.filter((l) => ["devis_envoye", "relance_1", "relance_2"].includes(l.statut)).length;
+            const casComplexesLoc = lf.filter((l) => l.statut === "complexe").length;
+            const montantPipeline = lf.filter((l) => !["refuse", "cloture"].includes(l.statut)).reduce((s, l) => s + (l.devis[0]?.montant_ttc ?? 0), 0);
+
+            const acceptes = lf.filter((l) => ["accepte_prospect", "confirme"].includes(l.statut)).length;
+            const tauxConversion = totalLeads > 0 ? Math.round((confirmes / totalLeads) * 100) : 0;
+            const totalHITL = lf.filter((l) => l.origine_demande === "complexe_hitl").length;
+            const tauxQualifAuto = totalLeads > 0 ? Math.round(((totalLeads - totalHITL) / totalLeads) * 100) : 0;
+            const panierMoyen = devisEnvoyes > 0 ? Math.round(montantPipeline / devisEnvoyes) : 0;
+
+            // Temps gagné (hypothèses métier)
+            const MIN_QUALIFICATION = 8;
+            const MIN_DEVIS = 15;
+            const MIN_ENVOI = 5;
+            const MIN_PAR_AUTO = MIN_QUALIFICATION + MIN_DEVIS + MIN_ENVOI; // 28 min
+            const MIN_PAR_COMPLEXE_PREFILL = 10; // gain sur la phase de complétion
+            const devisAutos = lf.filter((l) => l.origine_demande === "standard" && l.devis.length > 0).length;
+            const complexesTraites = lf.filter((l) => l.origine_demande === "complexe_hitl" && !["complexe"].includes(l.statut)).length;
+            const minGagnes = devisAutos * MIN_PAR_AUTO + complexesTraites * MIN_PAR_COMPLEXE_PREFILL;
+            const heuresGagnees = Math.round(minGagnes / 60 * 10) / 10;
+
+            // Répartition type client
+            const typeClientCounts: Record<string, number> = {};
+            lf.forEach((l) => {
+              const k = l.type_client ?? "particulier";
+              typeClientCounts[k] = (typeClientCounts[k] ?? 0) + 1;
+            });
+            const typeClientEntries = Object.entries(typeClientCounts).sort((a, b) => b[1] - a[1]);
+            const maxTypeClient = Math.max(...typeClientEntries.map(([, v]) => v), 1);
+
+            // Répartition origine demande
+            const origineCounts: Record<string, number> = {};
+            lf.forEach((l) => {
+              const k = l.origine_demande ?? "standard";
+              origineCounts[k] = (origineCounts[k] ?? 0) + 1;
+            });
+            const origineEntries = Object.entries(origineCounts).sort((a, b) => b[1] - a[1]);
+            const maxOrigine = Math.max(...origineEntries.map(([, v]) => v), 1);
+
+            const BAR_H = 22;
+            const barLabelStyle: React.CSSProperties = { fontSize: 12, fontFamily: "var(--font-sans)", color: "var(--text-body)", whiteSpace: "nowrap" };
+            const barValStyle: React.CSSProperties = { fontSize: 12, fontFamily: "var(--font-mono)", color: "var(--text-subtle)", whiteSpace: "nowrap" };
+
+            return (
+              <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+                {/* Ligne 1 — KPIs clés */}
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 12 }}>
+                  <StatCard label="Total leads"      value={String(totalLeads)}              caption="toutes demandes"             />
+                  <StatCard label="Devis envoyés"    value={String(devisEnvoyes)}            caption="flux actif"                  variant="accent" />
+                  <StatCard label="Confirmés"        value={String(confirmes)}               caption="prestations validées"        />
+                  <StatCard label="En relance"       value={String(enRelanceLoc)}            caption="en attente de réponse"       />
+                  <StatCard label="Cas complexes"    value={String(casComplexesLoc)}         caption="à traiter"                   variant={casComplexesLoc > 0 ? "warning" : "default"} />
+                  <StatCard label="Pipeline"         value={formatMontant(montantPipeline)}  caption="montant TTC estimé"          />
+                </div>
+
+                {/* Ligne 2 — Métriques avancées */}
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 12 }}>
+                  <StatCard label="Taux conversion"      value={`${tauxConversion} %`}           caption={`${confirmes} confirmés / ${totalLeads} leads`} />
+                  <StatCard label="Qualif. automatique"  value={`${tauxQualifAuto} %`}           caption={`${totalLeads - totalHITL} auto / ${totalHITL} HITL`} variant="accent" />
+                  <StatCard label="Panier moyen"         value={formatMontant(panierMoyen)}       caption="par devis envoyé"            />
+                  <StatCard label="Temps gagné"          value={`${heuresGagnees} h`}            caption={`≈ ${minGagnes} min économisées`} variant={heuresGagnees > 0 ? "accent" : "default"} />
+                </div>
+
+                {/* Ligne 3 — Graphiques */}
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
+
+                  {/* Entonnoir conversion */}
+                  <div style={{ background: "var(--surface-card)", border: "1px solid var(--border-soft)", borderRadius: 12, padding: "18px 20px" }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--text-subtle)", fontFamily: "var(--font-sans)", marginBottom: 14 }}>Entonnoir conversion</div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                      {[
+                        { label: "Leads reçus",    value: totalLeads,    color: "var(--horizon-200)" },
+                        { label: "Devis envoyés",  value: devisEnvoyes,  color: "var(--brand)"       },
+                        { label: "Acceptés",       value: acceptes,      color: "var(--positive-500)"},
+                        { label: "Confirmés",      value: confirmes,     color: "var(--positive-600)"},
+                      ].map(({ label, value, color }) => {
+                        const pct = totalLeads > 0 ? (value / totalLeads) * 100 : 0;
+                        return (
+                          <div key={label}>
+                            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+                              <span style={barLabelStyle}>{label}</span>
+                              <span style={barValStyle}>{value}</span>
+                            </div>
+                            <div style={{ height: BAR_H, background: "var(--surface-sunken)", borderRadius: 4, overflow: "hidden" }}>
+                              <div style={{ height: "100%", width: `${Math.max(pct, value > 0 ? 2 : 0)}%`, background: color, borderRadius: 4, transition: "width 0.4s ease" }} />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Type de client */}
+                  <div style={{ background: "var(--surface-card)", border: "1px solid var(--border-soft)", borderRadius: 12, padding: "18px 20px" }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--text-subtle)", fontFamily: "var(--font-sans)", marginBottom: 14 }}>Type de client</div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                      {typeClientEntries.map(([key, count]) => {
+                        const pct = (count / maxTypeClient) * 100;
+                        const label = TYPE_CLIENT_LABEL[key] ?? key;
+                        return (
+                          <div key={key}>
+                            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+                              <span style={barLabelStyle}>{label}</span>
+                              <span style={barValStyle}>{count}</span>
+                            </div>
+                            <div style={{ height: BAR_H, background: "var(--surface-sunken)", borderRadius: 4, overflow: "hidden" }}>
+                              <div style={{ height: "100%", width: `${Math.max(pct, count > 0 ? 2 : 0)}%`, background: "var(--horizon-400)", borderRadius: 4, transition: "width 0.4s ease" }} />
+                            </div>
+                          </div>
+                        );
+                      })}
+                      {typeClientEntries.length === 0 && <div style={{ fontSize: 13, color: "var(--text-muted)", fontFamily: "var(--font-sans)" }}>Aucune donnée</div>}
+                    </div>
+                  </div>
+
+                  {/* Origine des demandes */}
+                  <div style={{ background: "var(--surface-card)", border: "1px solid var(--border-soft)", borderRadius: 12, padding: "18px 20px" }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--text-subtle)", fontFamily: "var(--font-sans)", marginBottom: 14 }}>Origine des demandes</div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                      {origineEntries.map(([key, count]) => {
+                        const pct = (count / maxOrigine) * 100;
+                        const cfg = ORIGINE_CONFIG[key] ?? { label: key, color: "var(--stone-300)", bg: "var(--sand-100)", dot: "var(--stone-300)" };
+                        return (
+                          <div key={key}>
+                            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+                              <span style={barLabelStyle}>{cfg.label}</span>
+                              <span style={barValStyle}>{count}</span>
+                            </div>
+                            <div style={{ height: BAR_H, background: "var(--surface-sunken)", borderRadius: 4, overflow: "hidden" }}>
+                              <div style={{ height: "100%", width: `${pct}%`, background: cfg.dot, borderRadius: 4, minWidth: 4, transition: "width 0.4s ease" }} />
+                            </div>
+                          </div>
+                        );
+                      })}
+                      {origineEntries.length === 0 && <div style={{ fontSize: 13, color: "var(--text-muted)", fontFamily: "var(--font-sans)" }}>Aucune donnée</div>}
+                    </div>
+
+                    {/* Note temps gagné */}
+                    {heuresGagnees > 0 && (
+                      <div style={{ marginTop: 16, padding: "10px 12px", background: "var(--positive-100)", borderRadius: 8, fontSize: 12, fontFamily: "var(--font-sans)", color: "var(--positive-700)", lineHeight: 1.5 }}>
+                        <strong>{heuresGagnees}h</strong> économisées vs traitement manuel<br />
+                        <span style={{ fontSize: 11, color: "var(--positive-600)", opacity: 0.85 }}>28 min/devis auto · 10 min/complexe pré-rempli</span>
+                      </div>
+                    )}
+                  </div>
+
+                </div>
+              </div>
+            );
+          })()}
 
           {/* ── PIPELINE ── */}
           {view === "pipeline" && (
@@ -1003,7 +1245,7 @@ export function DashboardClient({ leads, kpis }: Props) {
 
           {/* ── CAS COMPLEXES ── */}
           {view === "complexes" && (
-            <ComplexesView leads={casComplexes} />
+            <ComplexesView leads={leads} />
           )}
 
           {/* ── ÉQUIPE ── */}

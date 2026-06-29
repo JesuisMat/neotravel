@@ -113,6 +113,10 @@ export interface NotifyCommercialParams {
   trajet: {
     origine?: string;
     destination?: string;
+    date_depart?: string;
+    heure_depart?: string;
+    date_retour?: string;
+    heure_retour?: string;
     nb_passagers?: number;
   };
   prix_ttc_estime?: number;
@@ -139,8 +143,10 @@ export async function notifyCommercial(
       <ul>
         <li>Départ : ${params.trajet.origine ?? "Non renseigné"}</li>
         <li>Destination : ${params.trajet.destination ?? "Non renseigné"}</li>
+        <li>Date départ : ${params.trajet.date_depart ?? "Non renseigné"}${params.trajet.heure_depart ? ` à ${params.trajet.heure_depart}` : ""}</li>
+        ${params.trajet.date_retour ? `<li>Date retour : ${params.trajet.date_retour}${params.trajet.heure_retour ? ` à ${params.trajet.heure_retour}` : ""}</li>` : ""}
         <li>Passagers : ${params.trajet.nb_passagers ?? "Non renseigné"}</li>
-        ${params.prix_ttc_estime ? `<li>Montant estimé : ${params.prix_ttc_estime.toLocaleString("fr-FR")} EUR TTC</li>` : ""}
+        ${params.prix_ttc_estime ? `<li><strong>Montant devis : ${params.prix_ttc_estime.toLocaleString("fr-FR")} € TTC</strong></li>` : ""}
       </ul>
       <h3>Contexte conversationnel</h3>
       <pre style="background:#f5f5f5;padding:12px;border-radius:4px;">${params.resume_conversation}</pre>

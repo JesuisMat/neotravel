@@ -46,14 +46,16 @@ export async function GET(req: Request) {
     `
     )
     .in("statut", ["devis_envoye", "relance_1"])
-    .not("devis.prochaine_relance", "is", null);
+    .not("devis.prochaine_relance", "is", null)
+    // Garde-fou : exclure explicitement les leads HITL (ne doivent jamais être relancés automatiquement)
+    .not("origine_demande", "in", '("complexe_hitl","rappel_demande")');
 
   if (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }
 
   const now = new Date();
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+  const appUrl = (process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000").replace(/\/$/, "");
 
   type DemandeRow = {
     id: string;

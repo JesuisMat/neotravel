@@ -3,6 +3,7 @@ import { z } from "zod";
 import { calculer_devis } from "@/lib/devis/calculer-devis";
 import { estimerDistance } from "@/lib/devis/distances";
 import { createAdminClient } from "@/lib/supabase/server";
+import { triggerN8nWorkflow } from "@/lib/n8n/trigger-webhook";
 import type { TypeVehicule, OptionDevis } from "@/lib/devis/types";
 
 // ============================================================
@@ -102,6 +103,10 @@ const escaladerInputSchema = z.object({
   nom_entreprise: z.string().optional(),
   origine: z.string().optional(),
   destination: z.string().optional(),
+  date_depart: z.string().optional().describe("Date de départ au format YYYY-MM-DD si connue"),
+  heure_depart: z.string().optional().describe("Heure de départ souhaitée au format HH:MM si connue"),
+  date_retour: z.string().optional().describe("Date de retour au format YYYY-MM-DD si connue"),
+  heure_retour: z.string().optional().describe("Heure de retour souhaitée au format HH:MM si connue"),
   nb_passagers: z.number().optional(),
   raison_escalade: z.string().describe("Raison précise de l'escalade (critère HITL déclenché)"),
   resume_conversation: z.string().describe("Résumé du contexte conversationnel pour le commercial"),
@@ -316,6 +321,27 @@ export const toolEnvoyerDevis = tool({
         },
       });
 
+      // Déclencher le workflow n8n (relances automatiques) — non bloquant
+      // Les leads HITL sont filtrés dans triggerN8nWorkflow
+      const { data: demande } = await supabase
+        .from("demandes")
+        .select("nom, origine, destination, date_depart, origine_demande")
+        .eq("id", params.demande_id)
+        .single();
+
+      await triggerN8nWorkflow({
+        demande_id: params.demande_id,
+        devis_id: params.devis_id,
+        email: params.email,
+        nom: demande?.nom ?? params.nom ?? null,
+        origine: demande?.origine ?? params.origine ?? null,
+        destination: demande?.destination ?? params.destination ?? null,
+        date_depart: demande?.date_depart ?? params.date_depart ?? null,
+        prix_ttc: params.prix_ttc,
+        decision_token: params.decision_token,
+        origine_demande: demande?.origine_demande ?? "standard",
+      });
+
       return { success: true, email: params.email };
     } catch (err) {
       const message = err instanceof Error ? err.message : "Erreur inconnue";
@@ -349,6 +375,10 @@ export const toolEscaladerHITL = tool({
             nom_entreprise: params.nom_entreprise ?? null,
             origine: params.origine ?? null,
             destination: params.destination ?? null,
+            date_depart: params.date_depart ?? null,
+            heure_depart: params.heure_depart ?? null,
+            date_retour: params.date_retour ?? null,
+            heure_retour: params.heure_retour ?? null,
             nb_passagers: params.nb_passagers ?? null,
             statut: "complexe",
             origine_demande: "complexe_hitl",
@@ -360,7 +390,14 @@ export const toolEscaladerHITL = tool({
       } else if (demandeId) {
         await supabase
           .from("demandes")
-          .update({ statut: "complexe", origine_demande: "complexe_hitl" })
+          .update({
+            statut: "complexe",
+            origine_demande: "complexe_hitl",
+            ...(params.date_depart !== undefined && { date_depart: params.date_depart }),
+            ...(params.heure_depart !== undefined && { heure_depart: params.heure_depart }),
+            ...(params.date_retour !== undefined && { date_retour: params.date_retour }),
+            ...(params.heure_retour !== undefined && { heure_retour: params.heure_retour }),
+          })
           .eq("id", demandeId);
       }
 
@@ -383,6 +420,10 @@ export const toolEscaladerHITL = tool({
           trajet: {
             origine: params.origine,
             destination: params.destination,
+            date_depart: params.date_depart,
+            heure_depart: params.heure_depart,
+            date_retour: params.date_retour,
+            heure_retour: params.heure_retour,
             nb_passagers: params.nb_passagers,
           },
           prix_ttc_estime: params.prix_ttc_estime,

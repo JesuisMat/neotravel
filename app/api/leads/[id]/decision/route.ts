@@ -42,11 +42,21 @@ export async function GET(
     });
   }
 
-  const nouveauStatut =
-    status === "accepte" ? "accepte_prospect" : status === "rappel" ? "complexe" : "refuse";
+  // ── Mise à jour statut demande + devis ──────────────────────────
+  // accepte  → accepte_prospect  + devis.decision = "accepte"  + escalade dashboard
+  // refuse   → refuse            + devis.decision = "refuse"   + opt-out (log opt_out)
+  // rappel   → complexe          + origine_demande = rappel_demande + escalade dashboard
 
-  // Transaction : mise à jour atomique
-  const decisionValue = status === "accepte" ? "accepte" : status === "rappel" ? null : "refuse";
+  const nouveauStatut =
+    status === "accepte" ? "accepte_prospect"
+    : status === "rappel" ? "complexe"
+    : "refuse";
+
+  const decisionValue = status === "rappel" ? null : status; // "accepte" | "refuse" | null
+
+  // Mise à jour demande
+  const demandeUpdate: Record<string, string> = { statut: nouveauStatut };
+  if (status === "rappel") demandeUpdate.origine_demande = "rappel_demande";
 
   const { error: errUpdate } = await supabase.rpc("traiter_decision_devis", {
     p_demande_id: demandeId,
@@ -56,28 +66,66 @@ export async function GET(
   });
 
   if (errUpdate) {
-    // Fallback : mises à jour séquentielles si la fonction RPC n'existe pas encore
-    await supabase
-      .from("demandes")
-      .update({ statut: nouveauStatut })
-      .eq("id", demandeId);
+    // Fallback séquentiel si RPC non disponible
+    await supabase.from("demandes").update(demandeUpdate).eq("id", demandeId);
 
+    // Pour accepte et refuse : on enregistre la décision sur le devis
     if (decisionValue !== null) {
-      await supabase
-        .from("devis")
-        .update({
-          decision: decisionValue,
-          decision_at: new Date().toISOString(),
-          prochaine_relance: null,
-        })
+      await supabase.from("devis").update({
+        decision: decisionValue,
+        decision_at: new Date().toISOString(),
+        prochaine_relance: null,
+      }).eq("id", devis.id);
+    }
+
+    // Pour rappel : stopper les relances automatiques (le dossier passe en manuel)
+    if (status === "rappel") {
+      await supabase.from("devis").update({
+        prochaine_relance: null,
+      }).eq("id", devis.id);
+    }
+  } else {
+    // RPC réussie — compléments que la RPC ne gère pas
+    if (status === "rappel") {
+      await supabase.from("demandes")
+        .update({ origine_demande: "rappel_demande" })
+        .eq("id", demandeId);
+      await supabase.from("devis")
+        .update({ prochaine_relance: null })
+        .eq("id", devis.id);
+    }
+    if (status === "refuse") {
+      // S'assurer que prochaine_relance est bien nulle (la RPC peut ne pas le faire)
+      await supabase.from("devis")
+        .update({ prochaine_relance: null })
         .eq("id", devis.id);
     }
   }
 
-  // Notification interne si acceptation ou demande de rappel
+  // ── Récupération données demande pour enrichir les notifications ──
+  const { data: demande } = await supabase
+    .from("demandes")
+    .select("nom, email, telephone, origine, destination, nb_passagers, date_depart, heure_depart")
+    .eq("id", demandeId)
+    .single();
+
+  const { data: devisData } = await supabase
+    .from("devis")
+    .select("montant_ttc")
+    .eq("id", devis.id)
+    .single();
+
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+
   if (status === "accepte" || status === "rappel") {
-    const baseUrl =
-      process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+    // ── Escalade dashboard commercial ──────────────────────────────
+    const raison = status === "accepte"
+      ? "✅ Prospect a ACCEPTÉ le devis — à confirmer avec le partenaire transporteur"
+      : "📞 Prospect souhaite être rappelé — questions en attente avant décision";
+    const resume = status === "accepte"
+      ? "Acceptation via lien signé email. Contacter le prospect pour confirmer la prestation et valider avec le partenaire."
+      : "Le prospect a cliqué \"Je souhaite être rappelé\" dans l'email de devis. Il n'a pas encore pris de décision — clarifier ses questions et reconfirmer le devis si besoin.";
+
     await fetch(`${baseUrl}/api/email/notify-commercial`, {
       method: "POST",
       headers: {
@@ -86,23 +134,35 @@ export async function GET(
       },
       body: JSON.stringify({
         demande_id: demandeId,
-        raison_escalade: status === "rappel"
-          ? "Prospect demande à être rappelé suite au devis"
-          : "Prospect a accepté le devis — à confirmer avec partenaire",
-        resume_conversation: status === "rappel"
-          ? "Demande de rappel via lien email"
-          : "Acceptation via lien signé email",
-        contact: {},
-        trajet: {},
+        raison_escalade: raison,
+        resume_conversation: resume,
+        contact: {
+          nom: demande?.nom ?? undefined,
+          email: demande?.email ?? undefined,
+          telephone: demande?.telephone ?? undefined,
+        },
+        trajet: {
+          origine: demande?.origine ?? undefined,
+          destination: demande?.destination ?? undefined,
+          nb_passagers: demande?.nb_passagers ?? undefined,
+          date_depart: demande?.date_depart ?? undefined,
+          heure_depart: demande?.heure_depart ?? undefined,
+        },
+        prix_ttc_estime: devisData?.montant_ttc ?? undefined,
       }),
-    }).catch(() => null); // Non bloquant
+    }).catch(() => null);
   }
 
+  // ── Log ────────────────────────────────────────────────────────
+  const logAction = status === "refuse" ? "opt_out_email" : `decision_${status}`;
   await supabase.from("logs").insert({
     demande_id: demandeId,
-    action: `decision_${status}`,
+    action: logAction,
     source: "user",
-    metadata: { devis_id: devis.id },
+    metadata: {
+      devis_id: devis.id,
+      ...(status === "refuse" && { opt_out: true, raison: "refus_devis_email" }),
+    },
   });
 
   const message =
