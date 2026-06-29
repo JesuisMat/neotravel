@@ -24,7 +24,7 @@ function calcProchaineRelance(urgence: string, baseDate: Date): Date {
 const bodySchema = z.object({
   // Champs complétés/corrigés par le commercial dans le formulaire
   nom: z.string().optional(),
-  email: z.string().email(),
+  email: z.string().min(1).transform((v) => v.trim()),
   telephone: z.string().optional(),
   origine: z.string().min(1),
   destination: z.string().min(1),

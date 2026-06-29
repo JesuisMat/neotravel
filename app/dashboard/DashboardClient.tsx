@@ -210,6 +210,7 @@ function ComplexeCard({ lead, onDone }: { lead: Lead; onDone: () => void }) {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
+  const [avecRetour, setAvecRetour] = useState(!!(lead.date_retour));
   const [form, setForm] = useState({
     nom:         lead.nom ?? "",
     email:       lead.email ?? "",
@@ -239,6 +240,8 @@ function ComplexeCard({ lead, onDone }: { lead: Lead; onDone: () => void }) {
         body: JSON.stringify({
           ...form,
           nb_passagers: Number(form.nb_passagers),
+          date_retour: avecRetour ? form.date_retour : undefined,
+          heure_retour: avecRetour ? form.heure_retour : undefined,
         }),
       });
       const json = await res.json();
@@ -349,8 +352,25 @@ function ComplexeCard({ lead, onDone }: { lead: Lead; onDone: () => void }) {
             <div><label style={labelS}>Destination *</label><input required value={form.destination} onChange={(e) => setForm((f) => ({ ...f, destination: e.target.value }))} placeholder="Toulouse" style={!form.destination ? missingS : inputS} /></div>
             <div><label style={labelS}>Date départ *</label><input required type="date" value={form.date_depart} onChange={(e) => setForm((f) => ({ ...f, date_depart: e.target.value }))} style={!form.date_depart ? missingS : inputS} /></div>
             <div><label style={labelS}>Heure départ *</label><input required type="time" value={form.heure_depart} onChange={(e) => setForm((f) => ({ ...f, heure_depart: e.target.value }))} style={!form.heure_depart ? missingS : inputS} /></div>
-            <div><label style={labelS}>Date retour</label><input type="date" value={form.date_retour} onChange={(e) => setForm((f) => ({ ...f, date_retour: e.target.value }))} style={inputS} /></div>
-            <div><label style={labelS}>Heure retour</label><input type="time" value={form.heure_retour} onChange={(e) => setForm((f) => ({ ...f, heure_retour: e.target.value }))} style={inputS} /></div>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, paddingTop: 18 }}>
+              <input
+                type="checkbox"
+                id={`retour-${lead.id}`}
+                checked={avecRetour}
+                onChange={(e) => {
+                  setAvecRetour(e.target.checked);
+                  if (!e.target.checked) setForm((f) => ({ ...f, date_retour: "", heure_retour: "" }));
+                }}
+                style={{ width: 15, height: 15, cursor: "pointer", accentColor: "var(--petrol-800)" }}
+              />
+              <label htmlFor={`retour-${lead.id}`} style={{ ...labelS, cursor: "pointer", marginBottom: 0 }}>Voyage aller/retour</label>
+            </div>
+            {avecRetour && (
+              <>
+                <div><label style={labelS}>Date retour</label><input type="date" value={form.date_retour} onChange={(e) => setForm((f) => ({ ...f, date_retour: e.target.value }))} style={inputS} /></div>
+                <div><label style={labelS}>Heure retour</label><input type="time" value={form.heure_retour} onChange={(e) => setForm((f) => ({ ...f, heure_retour: e.target.value }))} style={inputS} /></div>
+              </>
+            )}
             <div><label style={labelS}>Passagers *</label><input required type="number" min={1} max={85} value={form.nb_passagers} onChange={(e) => setForm((f) => ({ ...f, nb_passagers: e.target.value }))} style={!form.nb_passagers ? missingS : inputS} /></div>
             <div>
               <label style={labelS}>Urgence</label>
@@ -628,11 +648,11 @@ function EquipeView() {
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
               <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
                 <label style={labelStyle}>Nom complet</label>
-                <input type="text" required value={form.nom} onChange={(e) => setForm((f) => ({ ...f, nom: e.target.value }))} placeholder="Prénom Nom" style={inputStyle} onFocus={(e) => (e.target.style.borderColor = "var(--horizon-500)")} onBlur={(e) => (e.target.style.borderColor = "var(--border-medium)")} />
+                <input type="text" required value={form.nom} onChange={(e) => setForm((f) => ({ ...f, nom: e.target.value }))} placeholder="Prénom Nom" style={inputStyle} />
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
                 <label style={labelStyle}>Adresse email</label>
-                <input type="email" required value={form.email} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} placeholder="prenom.nom@neotravel.fr" style={inputStyle} onFocus={(e) => (e.target.style.borderColor = "var(--horizon-500)")} onBlur={(e) => (e.target.style.borderColor = "var(--border-medium)")} />
+                <input type="email" required value={form.email} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} placeholder="prenom.nom@neotravel.fr" style={inputStyle} />
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
                 <label style={labelStyle}>Rôle</label>
@@ -644,7 +664,7 @@ function EquipeView() {
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
                 <label style={labelStyle}>Mot de passe provisoire</label>
-                <input type="password" required minLength={8} value={form.password} onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))} placeholder="8 caractères minimum" style={inputStyle} onFocus={(e) => (e.target.style.borderColor = "var(--horizon-500)")} onBlur={(e) => (e.target.style.borderColor = "var(--border-medium)")} />
+                <input type="password" required minLength={8} value={form.password} onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))} placeholder="8 caractères minimum" style={inputStyle} />
               </div>
             </div>
             {formError && <div style={{ background: "var(--negative-100)", border: "1px solid var(--negative-600)", borderRadius: 8, padding: "9px 13px", fontSize: 13, color: "var(--negative-600)", fontFamily: "var(--font-sans)" }}>{formError}</div>}
