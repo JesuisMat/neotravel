@@ -8,6 +8,7 @@ interface DevisEmailProps {
   date_depart: string;
   acceptUrl: string;
   refuseUrl: string;
+  rappelUrl?: string;
 }
 
 export function DevisEmailTemplate({
@@ -18,6 +19,7 @@ export function DevisEmailTemplate({
   date_depart,
   acceptUrl,
   refuseUrl,
+  rappelUrl,
 }: DevisEmailProps): React.ReactElement {
   const dateFormatted = new Date(date_depart).toLocaleDateString("fr-FR", {
     day: "numeric",
@@ -155,6 +157,25 @@ export function DevisEmailTemplate({
               >
                 J&apos;accepte ce devis
               </a>
+              {rappelUrl && (
+                <a
+                  href={rappelUrl}
+                  style={{
+                    display: "inline-block",
+                    backgroundColor: "#c8a97e",
+                    color: "#1a1a2e",
+                    padding: "14px 24px",
+                    borderRadius: 8,
+                    textDecoration: "none",
+                    fontSize: 14,
+                    fontWeight: 600,
+                    marginRight: 12,
+                    marginBottom: 12,
+                  }}
+                >
+                  Je souhaite être rappelé
+                </a>
+              )}
               <a
                 href={refuseUrl}
                 style={{
@@ -166,9 +187,10 @@ export function DevisEmailTemplate({
                   textDecoration: "none",
                   fontSize: 14,
                   border: "1px solid #ddd",
+                  marginBottom: 12,
                 }}
               >
-                Je refuse
+                Je ne suis pas intéressé
               </a>
             </div>
           </div>

@@ -13,7 +13,7 @@ export async function GET(
     return new Response("Paramètres manquants", { status: 400 });
   }
 
-  if (status !== "accepte" && status !== "refuse") {
+  if (status !== "accepte" && status !== "refuse" && status !== "rappel") {
     return new Response("Statut invalide", { status: 400 });
   }
 
@@ -31,8 +31,8 @@ export async function GET(
     return new Response("Lien invalide ou expiré", { status: 404 });
   }
 
-  // Déjà traité
-  if (devis.decision) {
+  // Déjà traité (sauf rappel qui peut être re-demandé)
+  if (devis.decision && status !== "rappel") {
     const message =
       devis.decision === "accepte"
         ? "Votre devis a déjà été accepté. Nous vous recontacterons pour confirmer votre prestation."
@@ -43,13 +43,15 @@ export async function GET(
   }
 
   const nouveauStatut =
-    status === "accepte" ? "accepte_prospect" : "refuse";
+    status === "accepte" ? "accepte_prospect" : status === "rappel" ? "complexe" : "refuse";
 
   // Transaction : mise à jour atomique
+  const decisionValue = status === "accepte" ? "accepte" : status === "rappel" ? null : "refuse";
+
   const { error: errUpdate } = await supabase.rpc("traiter_decision_devis", {
     p_demande_id: demandeId,
     p_devis_id: devis.id,
-    p_decision: status === "accepte" ? "accepte" : "refuse",
+    p_decision: decisionValue,
     p_statut_demande: nouveauStatut,
   });
 
@@ -60,18 +62,20 @@ export async function GET(
       .update({ statut: nouveauStatut })
       .eq("id", demandeId);
 
-    await supabase
-      .from("devis")
-      .update({
-        decision: status === "accepte" ? "accepte" : "refuse",
-        decision_at: new Date().toISOString(),
-        prochaine_relance: null,
-      })
-      .eq("id", devis.id);
+    if (decisionValue !== null) {
+      await supabase
+        .from("devis")
+        .update({
+          decision: decisionValue,
+          decision_at: new Date().toISOString(),
+          prochaine_relance: null,
+        })
+        .eq("id", devis.id);
+    }
   }
 
-  // Notification interne si acceptation
-  if (status === "accepte") {
+  // Notification interne si acceptation ou demande de rappel
+  if (status === "accepte" || status === "rappel") {
     const baseUrl =
       process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
     await fetch(`${baseUrl}/api/email/notify-commercial`, {
@@ -82,8 +86,12 @@ export async function GET(
       },
       body: JSON.stringify({
         demande_id: demandeId,
-        raison_escalade: "Prospect a accepté le devis — à confirmer avec partenaire",
-        resume_conversation: "Acceptation via lien signé email",
+        raison_escalade: status === "rappel"
+          ? "Prospect demande à être rappelé suite au devis"
+          : "Prospect a accepté le devis — à confirmer avec partenaire",
+        resume_conversation: status === "rappel"
+          ? "Demande de rappel via lien email"
+          : "Acceptation via lien signé email",
         contact: {},
         trajet: {},
       }),
@@ -100,7 +108,9 @@ export async function GET(
   const message =
     status === "accepte"
       ? "Votre acceptation a bien été enregistrée. Notre équipe vous recontactera prochainement pour confirmer votre prestation."
-      : "Votre refus a bien été enregistré. Merci de nous avoir contactés — nous espérons pouvoir vous accompagner lors d'un prochain projet.";
+      : status === "rappel"
+      ? "Votre demande de rappel a bien été prise en compte. Un conseiller NeoTravel vous contactera dans les meilleurs délais."
+      : "Votre réponse a bien été enregistrée. Merci de nous avoir contactés — nous espérons pouvoir vous accompagner lors d'un prochain projet.";
 
   return new Response(decisionPage(message), {
     headers: { "Content-Type": "text/html; charset=utf-8" },

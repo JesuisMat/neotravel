@@ -35,6 +35,7 @@ export interface SendDevisParams {
 export async function sendDevisEmail(params: SendDevisParams): Promise<void> {
   const acceptUrl = `${APP_URL}/api/leads/${params.demande_id}/decision?token=${params.decision_token}&status=accepte`;
   const refuseUrl = `${APP_URL}/api/leads/${params.demande_id}/decision?token=${params.decision_token}&status=refuse`;
+  const rappelUrl = `${APP_URL}/api/leads/${params.demande_id}/decision?token=${params.decision_token}&status=rappel`;
 
   // Génération PDF si les données de calcul sont disponibles
   let pdfAttachment: { filename: string; content: Buffer } | undefined;
@@ -77,6 +78,7 @@ export async function sendDevisEmail(params: SendDevisParams): Promise<void> {
       date_depart: params.date_depart,
       acceptUrl,
       refuseUrl,
+      rappelUrl,
     }),
     ...(pdfAttachment
       ? {

@@ -34,12 +34,20 @@ const calculerDevisInputSchema = z.object({
   demande_id: z.string().optional().describe("ID de la demande Supabase si déjà créée"),
   nom: z.string().optional().describe("Nom du prospect"),
   email: z.string().email().describe("Email du prospect"),
-  telephone: z.string().describe("Téléphone du prospect"),
+  telephone: z.string().describe("Téléphone du prospect (mettre 'non communiqué' si refus)"),
+  type_client: z
+    .enum(["particulier", "entreprise", "association", "scolaire"])
+    .default("particulier")
+    .describe("Type de client : particulier, entreprise, association ou scolaire"),
+  nom_entreprise: z
+    .string()
+    .optional()
+    .describe("Nom de l'entreprise / établissement scolaire / association (si type_client != particulier)"),
   origine: z.string().describe("Ville/lieu de départ"),
   destination: z.string().describe("Ville/lieu d'arrivée"),
   date_depart: z.string().describe("Date de départ au format YYYY-MM-DD"),
   date_retour: z.string().optional().describe("Date de retour au format YYYY-MM-DD"),
-  nb_passagers: z.number().int().positive().describe("Nombre de passagers"),
+  nb_passagers: z.number().int().positive().describe("Nombre TOTAL de passagers à transporter, personne faisant la demande incluse"),
   options: z
     .array(z.enum(["guide", "nuit_chauffeur", "peages"]))
     .optional()
@@ -86,6 +94,8 @@ const escaladerInputSchema = z.object({
   nom: z.string().optional(),
   email: z.string().optional(),
   telephone: z.string().optional(),
+  type_client: z.enum(["particulier", "entreprise", "association", "scolaire"]).optional(),
+  nom_entreprise: z.string().optional(),
   origine: z.string().optional(),
   destination: z.string().optional(),
   nb_passagers: z.number().optional(),
@@ -159,6 +169,8 @@ export const toolCalculerDevis = tool({
             nom: params.nom ?? null,
             email: params.email,
             telephone: params.telephone,
+            type_client: params.type_client ?? "particulier",
+            nom_entreprise: params.nom_entreprise ?? null,
             origine: params.origine,
             destination: params.destination,
             date_depart: params.date_depart,
@@ -324,6 +336,8 @@ export const toolEscaladerHITL = tool({
             nom: params.nom ?? null,
             email: params.email,
             telephone: params.telephone ?? null,
+            type_client: params.type_client ?? "particulier",
+            nom_entreprise: params.nom_entreprise ?? null,
             origine: params.origine ?? null,
             destination: params.destination ?? null,
             nb_passagers: params.nb_passagers ?? null,
