@@ -9,12 +9,18 @@ interface LeadRow {
   nom: string | null;
   email: string | null;
   telephone: string | null;
+  type_client: string | null;
+  nom_entreprise: string | null;
   origine: string | null;
   destination: string | null;
   date_depart: string | null;
+  heure_depart: string | null;
+  date_retour: string | null;
+  heure_retour: string | null;
   statut: StatutDemande;
   urgence: string;
   nb_passagers: number | null;
+  notes: string | null;
   created_at: string;
   devis: Array<{
     id: string;
@@ -38,8 +44,9 @@ export default async function DashboardPage() {
     supabase
       .from("demandes")
       .select(
-        `id, nom, email, telephone, origine, destination, date_depart,
-         statut, urgence, nb_passagers, created_at,
+        `id, nom, email, telephone, type_client, nom_entreprise,
+         origine, destination, date_depart, heure_depart, date_retour, heure_retour,
+         statut, urgence, nb_passagers, notes, created_at,
          devis (id, montant_ttc, email_envoye_at, prochaine_relance, nb_relances, decision)`
       )
       .order("created_at", { ascending: false })

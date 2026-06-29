@@ -11,12 +11,18 @@ interface Lead {
   nom: string | null;
   email: string | null;
   telephone: string | null;
+  type_client: string | null;
+  nom_entreprise: string | null;
   origine: string | null;
   destination: string | null;
   date_depart: string | null;
+  heure_depart: string | null;
+  date_retour: string | null;
+  heure_retour: string | null;
   statut: StatutDemande;
   urgence: string;
   nb_passagers: number | null;
+  notes: string | null;
   created_at: string;
   devis: Array<{
     id: string;
@@ -164,25 +170,218 @@ function ConfirmButton({ demandeId }: { demandeId: string }) {
   );
 }
 
-function ComplexeAction({ demandeId, action, label, variant = "primary" }: { demandeId: string; action: string; label: string; variant?: "primary" | "ghost" }) {
-  const [loading, setLoading] = useState(false);
-  const [done, setDone] = useState(false);
+const TYPE_CLIENT_LABEL: Record<string, string> = {
+  particulier: "Particulier",
+  entreprise: "Entreprise",
+  association: "Association",
+  scolaire: "Scolaire",
+};
 
-  async function handleClick() {
-    setLoading(true);
+function ChampsManquantsBadge({ manquants }: { manquants: string[] }) {
+  if (manquants.length === 0) return null;
+  return (
+    <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginTop: 8 }}>
+      {manquants.map((c) => (
+        <span key={c} style={{ fontSize: 11, fontWeight: 600, fontFamily: "var(--font-sans)", padding: "2px 8px", borderRadius: 99, background: "var(--negative-100)", color: "var(--negative-600)", border: "1px solid rgba(200,50,50,0.15)" }}>
+          {c} manquant
+        </span>
+      ))}
+    </div>
+  );
+}
+
+function ComplexeCard({ lead, onDone }: { lead: Lead; onDone: () => void }) {
+  const CHAMPS_REQUIS: Array<{ key: keyof Lead; label: string }> = [
+    { key: "email",       label: "Email"       },
+    { key: "origine",     label: "Origine"     },
+    { key: "destination", label: "Destination" },
+    { key: "date_depart", label: "Date départ" },
+    { key: "heure_depart",label: "Heure départ"},
+    { key: "nb_passagers",label: "Passagers"   },
+  ];
+
+  const manquants = CHAMPS_REQUIS.filter((c) => !lead[c.key]).map((c) => c.label);
+  const peutEnvoyer = manquants.length === 0;
+
+  const [showForm, setShowForm] = useState(!peutEnvoyer);
+  const [sending, setSending] = useState(false);
+  const [closing, setClosing] = useState(false);
+  const [done, setDone] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+
+  const [form, setForm] = useState({
+    nom:         lead.nom ?? "",
+    email:       lead.email ?? "",
+    telephone:   lead.telephone ?? "",
+    origine:     lead.origine ?? "",
+    destination: lead.destination ?? "",
+    date_depart: lead.date_depart ?? "",
+    heure_depart:lead.heure_depart ?? "",
+    date_retour: lead.date_retour ?? "",
+    heure_retour:lead.heure_retour ?? "",
+    nb_passagers:lead.nb_passagers ? String(lead.nb_passagers) : "",
+    urgence:     lead.urgence ?? "standard",
+  });
+
+  const inputS: React.CSSProperties = { padding: "8px 11px", borderRadius: 7, border: "1.5px solid var(--border-medium)", background: "#fff", fontSize: 13, fontFamily: "var(--font-sans)", color: "var(--text-strong)", outline: "none", width: "100%", boxSizing: "border-box" };
+  const labelS: React.CSSProperties = { fontSize: 11.5, fontWeight: 600, color: "var(--text-strong)", fontFamily: "var(--font-sans)", marginBottom: 3, display: "block" };
+  const missingS: React.CSSProperties = { ...inputS, borderColor: "var(--negative-500)" };
+
+  async function handleSendDevis(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    setSending(true);
     try {
-      await fetch(`/api/dashboard/leads/${demandeId}/update-statut`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ statut: action }) });
-      setDone(true);
+      const res = await fetch(`/api/dashboard/leads/${lead.id}/send-devis`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...form,
+          nb_passagers: Number(form.nb_passagers),
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        setError(json.error ?? "Erreur lors de l'envoi");
+        return;
+      }
+      setSuccess(`Devis envoyé — ${json.prix_ttc?.toLocaleString("fr-FR")} € TTC`);
+      setTimeout(() => { setDone(true); onDone(); }, 2000);
+    } catch {
+      setError("Erreur réseau. Réessayez.");
     } finally {
-      setLoading(false);
+      setSending(false);
+    }
+  }
+
+  async function handleClose(statut: "refuse" | "cloture") {
+    setClosing(true);
+    try {
+      await fetch(`/api/dashboard/leads/${lead.id}/update-statut`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ statut }),
+      });
+      setDone(true);
+      onDone();
+    } finally {
+      setClosing(false);
     }
   }
 
   if (done) return null;
+
   return (
-    <button onClick={handleClick} disabled={loading} style={{ padding: "7px 14px", borderRadius: 8, border: variant === "ghost" ? "1px solid var(--border-medium)" : "none", background: variant === "ghost" ? "transparent" : "var(--petrol-800)", color: variant === "ghost" ? "var(--text-muted)" : "#fff", fontSize: 13, fontWeight: 500, cursor: loading ? "wait" : "pointer", fontFamily: "var(--font-sans)", transition: "opacity 0.12s" }}>
-      {loading ? "…" : label}
-    </button>
+    <div style={{ background: "var(--surface-card)", border: "1px solid var(--border-soft)", borderLeft: `3px solid ${peutEnvoyer ? "var(--positive-500)" : "var(--caution-500)"}`, borderRadius: "0 12px 12px 0", padding: "20px 22px" }}>
+      {/* En-tête */}
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 14, flexWrap: "wrap", marginBottom: 12 }}>
+        <div style={{ minWidth: 0 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 4 }}>
+            <span style={{ fontSize: 15, fontWeight: 600, color: "var(--text-strong)", fontFamily: "var(--font-sans)" }}>{lead.nom ?? "Prospect sans nom"}</span>
+            {lead.type_client && (
+              <span style={{ fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 99, background: "var(--horizon-100)", color: "var(--horizon-700)", fontFamily: "var(--font-sans)" }}>
+                {TYPE_CLIENT_LABEL[lead.type_client] ?? lead.type_client}
+              </span>
+            )}
+            {lead.nom_entreprise && (
+              <span style={{ fontSize: 12, fontWeight: 500, color: "var(--text-body)", fontFamily: "var(--font-sans)" }}>· {lead.nom_entreprise}</span>
+            )}
+          </div>
+          <div style={{ fontSize: 12.5, color: "var(--text-muted)", fontFamily: "var(--font-sans)", lineHeight: 1.5 }}>
+            {lead.email && <span>{lead.email}</span>}
+            {lead.telephone && <span> · {lead.telephone}</span>}
+            <span style={{ marginLeft: 6, color: "var(--text-subtle)" }}>· {timeAgo(lead.created_at)}</span>
+          </div>
+          {/* Trajet capturé */}
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginTop: 8 }}>
+            {[
+              { label: "Trajet",    value: lead.origine && lead.destination ? `${lead.origine} → ${lead.destination}` : null },
+              { label: "Départ",   value: lead.date_depart ? `${lead.date_depart}${lead.heure_depart ? ` à ${lead.heure_depart}` : ""}` : null },
+              { label: "Retour",   value: lead.date_retour ? `${lead.date_retour}${lead.heure_retour ? ` à ${lead.heure_retour}` : ""}` : null },
+              { label: "Pax",      value: lead.nb_passagers ? String(lead.nb_passagers) : null },
+              { label: "Urgence",  value: URGENCE_LABEL[lead.urgence] ?? lead.urgence },
+            ].map(({ label, value }) => value ? (
+              <div key={label} style={{ fontSize: 12, fontFamily: "var(--font-sans)" }}>
+                <span style={{ color: "var(--text-subtle)", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", fontSize: 10 }}>{label} </span>
+                <span style={{ color: "var(--text-body)" }}>{value}</span>
+              </div>
+            ) : null)}
+          </div>
+          {lead.notes && (
+            <div style={{ marginTop: 8, fontSize: 12, color: "var(--text-muted)", fontFamily: "var(--font-sans)", fontStyle: "italic", background: "var(--surface-sunken)", borderRadius: 6, padding: "6px 10px" }}>
+              {lead.notes}
+            </div>
+          )}
+          <ChampsManquantsBadge manquants={manquants} />
+        </div>
+        <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
+          {peutEnvoyer && !showForm && (
+            <button onClick={() => setShowForm(true)} style={{ padding: "7px 14px", borderRadius: 8, border: "none", background: "var(--petrol-800)", color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "var(--font-sans)" }}>
+              Générer & envoyer devis
+            </button>
+          )}
+          {!peutEnvoyer && !showForm && (
+            <button onClick={() => setShowForm(true)} style={{ padding: "7px 14px", borderRadius: 8, border: "none", background: "var(--caution-500)", color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "var(--font-sans)" }}>
+              Compléter & envoyer
+            </button>
+          )}
+          <button onClick={() => handleClose("refuse")} disabled={closing} style={{ padding: "7px 12px", borderRadius: 8, border: "1px solid var(--border-medium)", background: "transparent", color: "var(--text-muted)", fontSize: 13, fontWeight: 500, cursor: closing ? "wait" : "pointer", fontFamily: "var(--font-sans)" }}>
+            Refuser
+          </button>
+          <button onClick={() => handleClose("cloture")} disabled={closing} style={{ padding: "7px 12px", borderRadius: 8, border: "1px solid var(--border-medium)", background: "transparent", color: "var(--text-muted)", fontSize: 13, fontWeight: 500, cursor: closing ? "wait" : "pointer", fontFamily: "var(--font-sans)" }}>
+            Clôturer
+          </button>
+        </div>
+      </div>
+
+      {/* Formulaire inline */}
+      {showForm && (
+        <form onSubmit={handleSendDevis} style={{ borderTop: "1px solid var(--border-soft)", marginTop: 4, paddingTop: 16, display: "flex", flexDirection: "column", gap: 12 }}>
+          <div style={{ fontSize: 12.5, fontWeight: 700, color: "var(--text-strong)", fontFamily: "var(--font-sans)", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+            Vérifier / compléter avant envoi
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 10 }}>
+            <div><label style={labelS}>Nom</label><input value={form.nom} onChange={(e) => setForm((f) => ({ ...f, nom: e.target.value }))} placeholder="Prénom Nom" style={inputS} /></div>
+            <div><label style={labelS}>Email *</label><input required type="email" value={form.email} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} style={!form.email ? missingS : inputS} /></div>
+            <div><label style={labelS}>Téléphone</label><input value={form.telephone} onChange={(e) => setForm((f) => ({ ...f, telephone: e.target.value }))} style={inputS} /></div>
+            <div><label style={labelS}>Origine *</label><input required value={form.origine} onChange={(e) => setForm((f) => ({ ...f, origine: e.target.value }))} placeholder="Bordeaux" style={!form.origine ? missingS : inputS} /></div>
+            <div><label style={labelS}>Destination *</label><input required value={form.destination} onChange={(e) => setForm((f) => ({ ...f, destination: e.target.value }))} placeholder="Toulouse" style={!form.destination ? missingS : inputS} /></div>
+            <div><label style={labelS}>Date départ *</label><input required type="date" value={form.date_depart} onChange={(e) => setForm((f) => ({ ...f, date_depart: e.target.value }))} style={!form.date_depart ? missingS : inputS} /></div>
+            <div><label style={labelS}>Heure départ *</label><input required type="time" value={form.heure_depart} onChange={(e) => setForm((f) => ({ ...f, heure_depart: e.target.value }))} style={!form.heure_depart ? missingS : inputS} /></div>
+            <div><label style={labelS}>Date retour</label><input type="date" value={form.date_retour} onChange={(e) => setForm((f) => ({ ...f, date_retour: e.target.value }))} style={inputS} /></div>
+            <div><label style={labelS}>Heure retour</label><input type="time" value={form.heure_retour} onChange={(e) => setForm((f) => ({ ...f, heure_retour: e.target.value }))} style={inputS} /></div>
+            <div><label style={labelS}>Passagers *</label><input required type="number" min={1} max={85} value={form.nb_passagers} onChange={(e) => setForm((f) => ({ ...f, nb_passagers: e.target.value }))} style={!form.nb_passagers ? missingS : inputS} /></div>
+            <div>
+              <label style={labelS}>Urgence</label>
+              <select value={form.urgence} onChange={(e) => setForm((f) => ({ ...f, urgence: e.target.value }))} style={{ ...inputS, cursor: "pointer" }}>
+                <option value="standard">Standard</option>
+                <option value="urgent">Urgent</option>
+                <option value="tres_urgent">Très urgent</option>
+              </select>
+            </div>
+          </div>
+          {error && (
+            <div style={{ background: "var(--negative-100)", border: "1px solid var(--negative-500)", borderRadius: 8, padding: "9px 13px", fontSize: 13, color: "var(--negative-600)", fontFamily: "var(--font-sans)" }}>
+              {error}
+            </div>
+          )}
+          {success && (
+            <div style={{ background: "var(--positive-100)", border: "1px solid var(--positive-500)", borderRadius: 8, padding: "9px 13px", fontSize: 13, color: "var(--positive-700)", fontFamily: "var(--font-sans)", fontWeight: 600 }}>
+              {success}
+            </div>
+          )}
+          <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+            <button type="button" onClick={() => setShowForm(false)} style={{ padding: "8px 16px", borderRadius: 8, border: "1px solid var(--border-medium)", background: "transparent", color: "var(--text-muted)", fontSize: 13, fontWeight: 500, cursor: "pointer", fontFamily: "var(--font-sans)" }}>
+              Annuler
+            </button>
+            <button type="submit" disabled={sending} style={{ padding: "8px 20px", borderRadius: 8, border: "none", background: sending ? "var(--stone-200)" : "var(--petrol-800)", color: sending ? "var(--stone-400)" : "#fff", fontSize: 13, fontWeight: 600, cursor: sending ? "wait" : "pointer", fontFamily: "var(--font-sans)" }}>
+              {sending ? "Génération…" : "Générer & envoyer le devis"}
+            </button>
+          </div>
+        </form>
+      )}
+    </div>
   );
 }
 
@@ -527,6 +726,34 @@ function EquipeView() {
   );
 }
 
+function ComplexesView({ leads }: { leads: Lead[] }) {
+  const router = useRouter();
+  const [visible, setVisible] = useState<Set<string>>(() => new Set(leads.map((l) => l.id)));
+
+  function handleDone(id: string) {
+    setVisible((prev) => { const next = new Set(prev); next.delete(id); return next; });
+    router.refresh();
+  }
+
+  const actifs = leads.filter((l) => visible.has(l.id));
+
+  if (actifs.length === 0) {
+    return (
+      <div style={{ padding: "48px", textAlign: "center", color: "var(--text-muted)", fontSize: 14, fontFamily: "var(--font-sans)", background: "var(--surface-card)", borderRadius: 12, border: "1px solid var(--border-soft)" }}>
+        Aucun cas complexe en attente
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+      {actifs.map((r) => (
+        <ComplexeCard key={r.id} lead={r} onDone={() => handleDone(r.id)} />
+      ))}
+    </div>
+  );
+}
+
 // ─────────────────────────────────────────────
 // Navigation
 // ─────────────────────────────────────────────
@@ -732,36 +959,7 @@ export function DashboardClient({ leads, kpis }: Props) {
 
           {/* ── CAS COMPLEXES ── */}
           {view === "complexes" && (
-            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-              {casComplexes.length === 0 ? (
-                <div style={{ padding: "48px", textAlign: "center", color: "var(--text-muted)", fontSize: 14, fontFamily: "var(--font-sans)", background: "var(--surface-card)", borderRadius: 12, border: "1px solid var(--border-soft)" }}>
-                  Aucun cas complexe en attente
-                </div>
-              ) : (
-                casComplexes.map((r) => (
-                  <div key={r.id} style={{ background: "var(--surface-card)", border: "1px solid var(--border-soft)", borderLeft: "3px solid var(--caution-500)", borderRadius: "0 12px 12px 0", padding: "20px 22px" }}>
-                    <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 14, flexWrap: "wrap" }}>
-                      <div style={{ minWidth: 0 }}>
-                        <div style={{ fontSize: 15, fontWeight: 600, color: "var(--text-strong)", fontFamily: "var(--font-sans)", marginBottom: 3 }}>{r.nom ?? "Prospect"}</div>
-                        <div style={{ fontSize: 13, color: "var(--text-muted)", fontFamily: "var(--font-sans)" }}>
-                          {r.origine} → {r.destination} · {r.nb_passagers} pax · {timeAgo(r.created_at)}
-                        </div>
-                        {r.email && (
-                          <div style={{ fontSize: 12.5, color: "var(--brand)", fontFamily: "var(--font-sans)", marginTop: 3 }}>
-                            {r.email}{r.telephone && ` · ${r.telephone}`}
-                          </div>
-                        )}
-                      </div>
-                      <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
-                        <ComplexeAction demandeId={r.id} action="devis_envoye" label="Envoyer devis" />
-                        <ComplexeAction demandeId={r.id} action="refuse"       label="Refuser"        variant="ghost" />
-                        <ComplexeAction demandeId={r.id} action="cloture"      label="Clôturer"       variant="ghost" />
-                      </div>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
+            <ComplexesView leads={casComplexes} />
           )}
 
           {/* ── ÉQUIPE ── */}

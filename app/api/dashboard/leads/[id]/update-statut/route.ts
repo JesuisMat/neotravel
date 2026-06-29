@@ -2,7 +2,7 @@ import { createAdminClient } from "@/lib/supabase/server";
 import { z } from "zod";
 
 const schema = z.object({
-  statut: z.enum(["devis_envoye", "refuse", "cloture", "confirme"]),
+  statut: z.enum(["refuse", "cloture", "confirme"]),
 });
 
 export async function POST(
