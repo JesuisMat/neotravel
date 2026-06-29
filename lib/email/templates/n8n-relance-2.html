@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dernière relance — Devis NeoTravel</title>
+</head>
+<body style="margin:0;padding:40px 20px;background-color:#f8f7f4;font-family:'Helvetica Neue',Arial,sans-serif;">
+  <div style="max-width:560px;margin:0 auto;background-color:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
+
+    <!-- Header -->
+    <div style="background-color:#1a1a2e;padding:32px 40px;">
+      <p style="color:#c8a97e;font-size:12px;letter-spacing:0.15em;text-transform:uppercase;margin:0 0 8px 0;">NeoTravel</p>
+      <h1 style="color:#ffffff;font-size:24px;font-weight:300;margin:0;">Une dernière occasion de confirmer</h1>
+    </div>
+
+    <!-- Body -->
+    <div style="padding:40px;">
+      <p style="color:#333333;font-size:15px;margin-top:0;">Bonjour {{ $json.body.prenom }},</p>
+
+      <p style="color:#555555;font-size:15px;line-height:1.6;">
+        Nous revenons vers vous une dernière fois concernant votre devis pour le trajet ci-dessous. Après ce message, nous ne vous solliciterons plus.
+      </p>
+
+      <!-- Trajet card -->
+      <div style="background-color:#f8f7f4;border-radius:8px;padding:20px 24px;margin-bottom:24px;">
+        <p style="margin:0 0 4px 0;color:#888888;font-size:12px;text-transform:uppercase;letter-spacing:0.1em;">Votre trajet</p>
+        <p style="margin:0 0 12px 0;color:#1a1a2e;font-size:17px;font-weight:600;">{{ $json.body.origine }} → {{ $json.body.destination }}</p>
+        <p style="margin:0;color:#555555;font-size:14px;">Départ le {{ $json.body.date_depart }}</p>
+      </div>
+
+      <!-- Montant -->
+      <div style="border-top:1px solid #eeeeee;border-bottom:1px solid #eeeeee;padding:20px 0;margin-bottom:32px;">
+        <table width="100%" cellpadding="0" cellspacing="0" border="0">
+          <tr>
+            <td style="color:#555555;font-size:14px;">Montant total TTC</td>
+            <td align="right" style="color:#1a1a2e;font-size:28px;font-weight:700;">{{ $json.body.prix_ttc }} €</td>
+          </tr>
+        </table>
+      </div>
+
+      <p style="color:#555555;font-size:14px;line-height:1.6;">
+        Si votre projet est toujours d'actualité, notre équipe se tient disponible pour confirmer votre réservation, ajuster le devis ou répondre à vos questions.
+      </p>
+
+      <!-- CTA -->
+      <div style="margin-top:32px;text-align:center;">
+        <a href="{{ $json.body.accept_url }}"
+           style="display:inline-block;background-color:#1a1a2e;color:#ffffff;padding:14px 32px;border-radius:8px;text-decoration:none;font-size:15px;font-weight:600;margin-right:8px;margin-bottom:12px;">
+          Je confirme mon trajet
+        </a>
+        <a href="{{ $json.body.rappel_url }}"
+           style="display:inline-block;background-color:#c8a97e;color:#1a1a2e;padding:14px 24px;border-radius:8px;text-decoration:none;font-size:14px;font-weight:600;margin-right:8px;margin-bottom:12px;">
+          Je souhaite être rappelé
+        </a>
+        <a href="{{ $json.body.refuse_url }}"
+           style="display:inline-block;background-color:transparent;color:#666666;padding:14px 24px;border-radius:8px;text-decoration:none;font-size:14px;border:1px solid #dddddd;margin-bottom:12px;">
+          Je ne suis plus intéressé
+        </a>
+      </div>
+
+      <p style="color:#aaaaaa;font-size:13px;text-align:center;margin-top:24px;line-height:1.5;">
+        Si vous ne souhaitez plus être contacté, cliquez sur "Je ne suis plus intéressé" — nous ne vous recontacterons pas.
+      </p>
+    </div>
+
+    <!-- Footer -->
+    <div style="background-color:#f8f7f4;padding:24px 40px;border-top:1px solid #eeeeee;">
+      <p style="color:#999999;font-size:12px;margin:0;line-height:1.6;">
+        NeoTravel — Affrètement d'autocars et minibus<br/>
+        Une question ? Répondez directement à cet email.
+      </p>
+    </div>
+
+  </div>
+</body>
+</html>

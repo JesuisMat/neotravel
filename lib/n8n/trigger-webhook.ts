@@ -37,25 +37,35 @@ export async function triggerN8nWorkflow(payload: {
   const appUrl = (process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000").replace(/\/$/, "");
   const prenom = payload.nom ? payload.nom.split(" ")[0] : "";
 
-  await fetch(webhookUrl, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      demande_id: payload.demande_id,
-      devis_id: payload.devis_id,
-      email: payload.email,
-      prenom,
-      nom: payload.nom ?? "",
-      origine: payload.origine ?? "",
-      destination: payload.destination ?? "",
-      date_depart: payload.date_depart ?? "",
-      prix_ttc: payload.prix_ttc,
-      origine_demande: payload.origine_demande,
-      accept_url: `${appUrl}/api/leads/${payload.demande_id}/decision?token=${payload.decision_token}&status=accepte`,
-      refuse_url: `${appUrl}/api/leads/${payload.demande_id}/decision?token=${payload.decision_token}&status=refuse`,
-      rappel_url: `${appUrl}/api/leads/${payload.demande_id}/decision?token=${payload.decision_token}&status=rappel`,
-      // URL de vérification statut pour les checks intermédiaires n8n
-      status_url: `${appUrl}/api/internal/leads/${payload.demande_id}/status`,
-    }),
-  }).catch(() => null); // Non bloquant
+  const body = {
+    demande_id: payload.demande_id,
+    devis_id: payload.devis_id,
+    email: payload.email,
+    prenom,
+    nom: payload.nom ?? "",
+    origine: payload.origine ?? "",
+    destination: payload.destination ?? "",
+    date_depart: payload.date_depart ?? "",
+    prix_ttc: payload.prix_ttc,
+    origine_demande: payload.origine_demande,
+    accept_url: `${appUrl}/api/leads/${payload.demande_id}/decision?token=${payload.decision_token}&status=accepte`,
+    refuse_url: `${appUrl}/api/leads/${payload.demande_id}/decision?token=${payload.decision_token}&status=refuse`,
+    rappel_url: `${appUrl}/api/leads/${payload.demande_id}/decision?token=${payload.decision_token}&status=rappel`,
+    status_url: `${appUrl}/api/internal/leads/${payload.demande_id}/status`,
+  };
+
+  try {
+    const res = await fetch(webhookUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) {
+      console.error(`[n8n] webhook HTTP ${res.status}:`, await res.text().catch(() => ""));
+    } else {
+      console.log(`[n8n] webhook déclenché → ${payload.email} (demande ${payload.demande_id})`);
+    }
+  } catch (err) {
+    console.error("[n8n] webhook fetch failed:", err);
+  }
 }
