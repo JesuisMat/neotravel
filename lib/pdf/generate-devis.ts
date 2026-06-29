@@ -270,7 +270,10 @@ const styles = StyleSheet.create({
 // Helpers
 // ============================================================
 function formatEur(amount: number): string {
-  return `${amount.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €`;
+  const fixed = amount.toFixed(2).replace(".", ",");
+  const parts = fixed.split(",");
+  parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, "\u00a0");
+  return `${parts[0]},${parts[1]} \u20ac`;
 }
 
 function formatCoeffLabel(type: string, code: string): string {
@@ -506,7 +509,10 @@ export async function generateDevisPDF(params: DevisPDFParams): Promise<Buffer> 
   // Filtrer la marge commerciale — donnée réservée à l'usage interne
   // La TVA reste visible car elle figure sur le total (ligne réglementaire)
   const lignesClient = params.lignes.filter(
-    (l) => !l.libelle.toLowerCase().startsWith("marge")
+    (l) =>
+      !l.libelle.toLowerCase().startsWith("marge") &&
+      !l.libelle.toLowerCase().startsWith("ajustements coefficients") &&
+      !l.libelle.toLowerCase().startsWith("tva")
   );
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const doc = React.createElement(DevisPDFDocument, {

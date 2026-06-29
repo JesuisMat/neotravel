@@ -110,14 +110,10 @@ export function calculer_devis(params: CalculerDevisParams): ResultatDevis {
     params.date_retour !== undefined && params.date_retour !== null;
   const base_distance = has_retour ? round2(base_simple * 2) : base_simple;
 
-  const formule =
-    distance_km <= 180
-      ? `Forfait ${Math.min(Math.ceil(distance_km / 10) * 10, 180)} km`
-      : `${distance_km} km × 2 × 2,5 €/km`;
-  const aller_retour_label = has_retour ? " (aller/retour)" : " (aller simple)";
+  const aller_retour_label = has_retour ? "aller/retour" : "aller simple";
 
   const base_km: LigneCalcul = {
-    libelle: `${vehicule.label} — ${formule}${aller_retour_label}`,
+    libelle: `Transport en ${vehicule.label} — ${aller_retour_label}`,
     montant: base_distance,
   };
 
