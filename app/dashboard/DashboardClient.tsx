@@ -21,6 +21,7 @@ interface Lead {
   heure_retour: string | null;
   statut: StatutDemande;
   urgence: string;
+  origine_demande: string;
   nb_passagers: number | null;
   notes: string | null;
   created_at: string;
@@ -77,6 +78,29 @@ const URGENCE_COLOR: Record<string, string> = {
   urgent: "var(--caution-600)",
   standard: "var(--text-subtle)",
 };
+
+const ORIGINE_CONFIG: Record<string, { label: string; bg: string; color: string; dot: string }> = {
+  standard:       { label: "Standard",  bg: "var(--sand-100)",      color: "var(--stone-500)",    dot: "var(--stone-300)"    },
+  urgent:         { label: "Urgent",    bg: "var(--caution-100)",   color: "var(--caution-700)",  dot: "var(--caution-500)"  },
+  complexe_hitl:  { label: "Complexe",  bg: "var(--negative-100)",  color: "var(--negative-600)", dot: "var(--negative-500)" },
+  rappel_demande: { label: "Rappel",    bg: "var(--horizon-100)",   color: "var(--horizon-700)",  dot: "var(--horizon-500)"  },
+};
+
+function OrigineBadge({ urgence, origine_demande }: { urgence: string; origine_demande: string }) {
+  // Priorité : complexe_hitl > rappel_demande > urgence > standard
+  const key = origine_demande === "complexe_hitl" || origine_demande === "rappel_demande"
+    ? origine_demande
+    : urgence === "tres_urgent" || urgence === "urgent"
+    ? "urgent"
+    : "standard";
+  const cfg = ORIGINE_CONFIG[key];
+  return (
+    <span style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "3px 9px 3px 7px", borderRadius: 99, fontSize: 12, fontWeight: 600, fontFamily: "var(--font-sans)", background: cfg.bg, color: cfg.color, whiteSpace: "nowrap" }}>
+      <span style={{ width: 5, height: 5, borderRadius: "50%", background: cfg.dot, flexShrink: 0 }} />
+      {cfg.label}
+    </span>
+  );
+}
 
 const ROLE_CONFIG: Record<string, { label: string; bg: string; color: string }> = {
   admin:      { label: "Admin",      bg: "var(--petrol-800)",   color: "#fff"                    },
@@ -467,7 +491,7 @@ function LeadTable({ leads, showAction }: { leads: Lead[]; showAction?: boolean 
     );
   }
 
-  const headers = ["Lead", "Trajet", "Pax", "Statut", "Urgence", "Montant TTC", "Reçu", "Devis"];
+  const headers = ["Lead", "Trajet", "Pax", "Statut", "Type", "Montant TTC", "Reçu", "Devis"];
   if (showAction) headers.push("");
 
   return (
@@ -514,9 +538,9 @@ function LeadTable({ leads, showAction }: { leads: Lead[]; showAction?: boolean 
                   <td style={{ padding: "13px 16px" }}>
                     <StatusBadge statut={r.statut} />
                   </td>
-                  {/* Urgence */}
-                  <td style={{ padding: "13px 16px", fontSize: 12.5, fontFamily: "var(--font-sans)", color: URGENCE_COLOR[r.urgence] ?? "var(--text-muted)", fontWeight: r.urgence !== "standard" ? 600 : 400 }}>
-                    {URGENCE_LABEL[r.urgence] ?? r.urgence}
+                  {/* Type */}
+                  <td style={{ padding: "13px 16px" }}>
+                    <OrigineBadge urgence={r.urgence} origine_demande={r.origine_demande} />
                   </td>
                   {/* Montant */}
                   <td style={{ padding: "13px 16px", fontSize: 13, fontFamily: "var(--font-mono)", fontWeight: 600, color: devis ? "var(--text-strong)" : "var(--text-subtle)" }}>

@@ -187,6 +187,7 @@ export const toolCalculerDevis = tool({
             distance_km,
             notes: params.notes ?? null,
             urgence: params.urgence,
+            origine_demande: "standard",
             score_completude: 100,
             statut: "complet",
           })
@@ -350,6 +351,7 @@ export const toolEscaladerHITL = tool({
             destination: params.destination ?? null,
             nb_passagers: params.nb_passagers ?? null,
             statut: "complexe",
+            origine_demande: "complexe_hitl",
             notes: `Escalade HITL: ${params.raison_escalade}`,
           })
           .select("id")
@@ -358,7 +360,7 @@ export const toolEscaladerHITL = tool({
       } else if (demandeId) {
         await supabase
           .from("demandes")
-          .update({ statut: "complexe" })
+          .update({ statut: "complexe", origine_demande: "complexe_hitl" })
           .eq("id", demandeId);
       }
 
