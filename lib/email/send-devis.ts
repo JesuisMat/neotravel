@@ -26,7 +26,9 @@ export interface SendDevisParams {
   origine: string;
   destination: string;
   date_depart: string;
+  heure_depart?: string;
   date_retour?: string;
+  heure_retour?: string;
   nb_passagers?: number;
   lignes?: LigneCalcul[];
   coefficients?: CoefficientApplique[];
@@ -48,7 +50,9 @@ export async function sendDevisEmail(params: SendDevisParams): Promise<void> {
         origine: params.origine,
         destination: params.destination,
         date_depart: params.date_depart,
+        heure_depart: params.heure_depart,
         date_retour: params.date_retour,
+        heure_retour: params.heure_retour,
         nb_passagers: params.nb_passagers ?? 0,
         lignes: params.lignes,
         coefficients: params.coefficients ?? [],

@@ -20,7 +20,9 @@ export interface DevisPDFParams {
   origine: string;
   destination: string;
   date_depart: string;
+  heure_depart?: string;
   date_retour?: string;
+  heure_retour?: string;
   nb_passagers: number;
   lignes: LigneCalcul[];
   coefficients: CoefficientApplique[];
@@ -300,7 +302,9 @@ function DevisPDFDocument({
   origine,
   destination,
   date_depart,
+  heure_depart,
   date_retour,
+  heure_retour,
   nb_passagers,
   lignes,
   coefficients,
@@ -374,7 +378,7 @@ function DevisPDFDocument({
           React.createElement(
             Text,
             { style: styles.infoLineGrey },
-            `Départ : ${date_depart}${date_retour ? ` — Retour : ${date_retour}` : ""}`
+            `Départ : ${date_depart}${heure_depart ? ` à ${heure_depart}` : ""}${date_retour ? ` — Retour : ${date_retour}${heure_retour ? ` à ${heure_retour}` : ""}` : ""}`
           ),
           React.createElement(
             Text,
